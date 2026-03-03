@@ -1,40 +1,44 @@
-import pytest
 import requests
-from faker import Faker
-from constants import HEADERS, BASE_URL
-
-faker = Faker()
+from constants import BASE_URL, HEADERS, REGISTER_ENDPOINT, LOGIN_ENDPOINT
+import pytest
+from utils.data_generator import DataGenerator
 
 @pytest.fixture(scope="session")
-def auth_session():
+def test_user():
+    #Генерация случайного пользователя
+    random_email = DataGenerator.generate_random_email()
+    random_name = DataGenerator.generate_random_name()
+    random_password = DataGenerator.generate_random_password()
+
+    return {
+        "email": random_email,
+        "fullName": random_name,
+        "password": random_password,
+        "passwordRepeat": random_password,
+        "roles": ["USER"]
+    }
+
+@pytest.fixture(scope="session")
+def auth_session(test_user):
+    #Регистрация нового пользователя
+    register_url = f"{BASE_URL}{REGISTER_ENDPOINT}"
+    response = requests.post(register_url, json=test_user, headers=HEADERS)
+    assert response.status_code == 201, f"Ошибка регистрации пользователя"
+
+    #Логинимся для получения токена
+    login_url = f"{BASE_URL}{LOGIN_ENDPOINT}"
+    login_data = {
+        "email": test_user["email"],
+        "password": test_user["password"]
+    }
+    response = requests.post(login_url, json=login_data, headers=HEADERS)
+    assert response.status_code == 200, "Ошибка авторизации"
+
+    #Получаем токен и создаём сессию
+    token = response.json().get("accessToken")
+    assert token is not None, "Токен доступа отсуствует в ответе"
+
     session = requests.Session()
     session.headers.update(HEADERS)
-
-    response = requests.post(
-        f"{BASE_URL}/auth",
-        headers=HEADERS,
-        json={
-            "username" : "admin",
-            "password" : "password123"
-        }
-    )
-    assert response.status_code == 200, "Ошибка авторизации"
-    token = response.json().get("token")
-    assert token is not None, "В ответе не оказалось токена"
-
-    session.headers.update({"Cookie": f"token={token}"})
+    session.headers.update({"Authorization": f"Bearer {token}"})
     return session
-
-@pytest.fixture
-def booking_data():
-    return {
-        "firstname": faker.first_name(),
-        "lastname": faker.last_name(),
-        "totalprice": faker.random_int(min=100, max=10000),
-        "depositpaid" : True,
-        "bookingdates" : {
-            "checkin": "2024-04-05",
-            "checkout": "2024-04-08"
-        },
-        "additionalneeds": "Cigars"
-    }
