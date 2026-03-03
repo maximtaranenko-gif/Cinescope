@@ -3,3 +3,6 @@ HEADERS = {
     "Content-Type": "application/json",
     "Accept": "application/json"
 }
+
+LOGIN_ENDPOINT = "/login"
+REGISTER_ENDPOINT = '/register'
