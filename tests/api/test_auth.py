@@ -46,7 +46,6 @@ class TestAuthAPI:
         #Проверки
         assert response.status_code == 201, "Авторизация не удалась"
         response_data = response.json()
-        #Проверки
         assert "accessToken" in response_data, "Токен в ответе отсутствует"
         assert "user" in response_data, "Поле user отсутствует в ответе"
         #Проверка email
