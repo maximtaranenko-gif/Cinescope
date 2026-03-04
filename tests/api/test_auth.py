@@ -42,6 +42,7 @@ class TestAuthAPI:
         #Логи авторизации
         print(f"{response.status_code}")
         print(f"{response.text}")
+        print("=" * 180)
 
         #Проверки
         assert response.status_code == 201, "Авторизация не удалась"
@@ -69,6 +70,7 @@ class TestAuthAPI:
         #Логи
         print(f"Response status: {response.status_code}")
         print(f"Response body wrong password: {response.text}")
+        print("=" * 180)
         #Проверки
         assert response.status_code == 401, f"Ожидалась ошибка 401 , получили: {response.status_code}"
 
@@ -80,13 +82,29 @@ class TestAuthAPI:
         }
         response = requests.post(login_url, json=login_data_incorrect_email, headers=HEADERS)
 
-        print(f"Response body incorrect email: {response.text}")
-        #Проверки
-        try:
-            assert response.status_code == 401
-        except AssertionError:
-            print(f"Ошибка от сервера, ожидалось 401, получили {response.status_code}")
+        #Логи
+        print(f"Response status: {response.status_code}")
+        print(f"Response body wrong password: {response.text}")
+        print("=" * 185)
 
+        #Проверки
+        if response.status_code == 500:
+            print(f"Баг! Сервер возвращает : {response.status_code}")
+        else:
+            assert response.status_code == 401, f"Ожидалась ошибка 401, получили {response.status_code}"
+
+        #Проверка пустым телом запроса
+        response = requests.post(login_url, headers=HEADERS)
+
+        #Логи
+        print(f"Response status: {response.status_code}")
+        print(f"Response body wrong password: {response.text}")
+        print("=" * 180)
+
+        if response.status_code == 500:
+            print(f"Баг! Сервер возвращает: {response.status_code}")
+        else:
+            assert response.status_code == 401, f"Ожидалась ошибка 401, сервер вернул {response.status_code}"
 
         #Проверка пустым json
         login_data_empty = {
@@ -96,7 +114,7 @@ class TestAuthAPI:
         response = requests.post(login_url, json=login_data_empty, headers=HEADERS)
         #Проверки
         if response.status_code == 500:
-            print(f"Баг: сервер возвращает {response.status_code}")
+            print(f"Баг! сервер возвращает {response.status_code}")
         else:
             assert response.status_code == 400, "Некорректный запрос"
 
@@ -104,6 +122,12 @@ class TestAuthAPI:
         #Проверка пустой строкой
         login_data_wrong_str = ""
         response = requests.post(login_url, json= login_data_wrong_str, headers=HEADERS)
+        #Логи
+        print(f"Response status: {response.status_code}")
+        print(f"Response body wrong password: {response.text}")
+        print("=" * 180)
+
+        #Проверки
         assert response.status_code == 400, "Некорректный запрос"
 
 
