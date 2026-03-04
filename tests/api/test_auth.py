@@ -4,12 +4,15 @@ from constants import BASE_URL, HEADERS, REGISTER_ENDPOINT, LOGIN_ENDPOINT
 
 
 class TestAuthAPI:
-    def test_register_user(self, test_user):
-        #URL для регистрации
-        register_url = f"{BASE_URL}{REGISTER_ENDPOINT}"
+    #Эндпоинт регистрации
+    REGISTER_URL = f"{BASE_URL}{REGISTER_ENDPOINT}"
+    #Эндпоинт авторизации
+    LOGIN_URL = f"{BASE_URL}{LOGIN_ENDPOINT}"
 
+
+    def test_register_user(self, test_user):
         #Отправка запроса на регистрацию
-        response = requests.post(register_url, json=test_user, headers=HEADERS)
+        response = requests.post(TestAuthAPI.REGISTER_URL, json=test_user, headers=HEADERS)
 
         #Логируем ответ для диагностики:
         print(f"Response status: {response.status_code}")
@@ -27,9 +30,6 @@ class TestAuthAPI:
 
 
     def test_authorization_user(self, test_user):
-        #URL авторизации
-        login_url = f"{BASE_URL}{LOGIN_ENDPOINT}"
-
         #Данные для авторизации
         login_data = {
             "email":test_user["email"],
@@ -37,7 +37,7 @@ class TestAuthAPI:
         }
 
         #Отправка запроса на авторизацию
-        response = requests.post(login_url, json=login_data, headers=HEADERS)
+        response = requests.post(TestAuthAPI.LOGIN_URL, json=login_data, headers=HEADERS)
 
         #Логи авторизации
         print(f"{response.status_code}")
@@ -55,17 +55,14 @@ class TestAuthAPI:
         assert "email" != "", "email пустой"
         assert "@" in response_data["user"]["email"], f"email не содержит @"
 
-    def test_negative_checks_authorization(self, test_user):
-        #URL для авторизации
-        login_url = f"{BASE_URL}{LOGIN_ENDPOINT}"
 
-
+    def test_negative_incorrect_data_authorization(self, test_user):
         #Некорректные данные для авторизации(собственный пароль)
-        login_data_wrong_password = {
+        login_data = {
             "email":test_user["email"],
             "password": "Geychik228"
         }
-        response = requests.post(login_url, json=login_data_wrong_password, headers=HEADERS)
+        response = requests.post(TestAuthAPI.LOGIN_URL, json=login_data, headers=HEADERS)
 
         #Логи
         print(f"Response status: {response.status_code}")
@@ -75,53 +72,58 @@ class TestAuthAPI:
         assert response.status_code == 401, f"Ожидалась ошибка 401 , получили: {response.status_code}"
 
 
+    def test_negative_incorrect_email(self, test_user):
         #Некоректный email
-        login_data_incorrect_email = {
+        login_data = {
             "email": "maximtaranenko@gmail.com",
             "password":test_user["password"]
         }
-        response = requests.post(login_url, json=login_data_incorrect_email, headers=HEADERS)
+        response = requests.post(TestAuthAPI.LOGIN_URL, json=login_data, headers=HEADERS)
 
-        #Логи
-        print(f"Response status: {response.status_code}")
-        print(f"Response body wrong password: {response.text}")
-        print("=" * 185)
-
-        #Проверки
-        if response.status_code == 500:
-            print(f"Баг! Сервер возвращает : {response.status_code}")
-        else:
-            assert response.status_code == 401, f"Ожидалась ошибка 401, получили {response.status_code}"
-
-        #Проверка пустым телом запроса
-        response = requests.post(login_url, headers=HEADERS)
+        assert response.status_code == 401, f"Ожидалась ошибка 401, получили: {response.status_code}"
 
         #Логи
         print(f"Response status: {response.status_code}")
         print(f"Response body wrong password: {response.text}")
         print("=" * 180)
 
-        if response.status_code == 500:
-            print(f"Баг! Сервер возвращает: {response.status_code}")
-        else:
-            assert response.status_code == 401, f"Ожидалась ошибка 401, сервер вернул {response.status_code}"
+        #Проверки
+        assert response.status_code == 401, f"Ожидалась ошибка 401, получили {response.status_code}"
 
+
+    def test_negative_empty_body_request(self, test_user):
+        #Проверка пустым телом запроса
+        response = requests.post(TestAuthAPI.LOGIN_URL, headers=HEADERS)
+
+        #Логи
+        print(f"Response status: {response.status_code}")
+        print(f"Response body wrong password: {response.text}")
+        print("=" * 180)
+
+        assert response.status_code == 401, f"Ожидалась ошибка 401, сервер вернул {response.status_code}"
+
+
+    def test_negative_empty_json(self):
         #Проверка пустым json
-        login_data_empty = {
+        login_data = {
             "email":"",
             "password":""
         }
-        response = requests.post(login_url, json=login_data_empty, headers=HEADERS)
+        response = requests.post(TestAuthAPI.LOGIN_URL, json=login_data, headers=HEADERS)
+
+        print(f"Response status: {response.status_code}")
+        print(f"Response body wrong password: {response.text}")
+        print("=" * 180)
         #Проверки
-        if response.status_code == 500:
-            print(f"Баг! сервер возвращает {response.status_code}")
-        else:
-            assert response.status_code == 400, "Некорректный запрос"
+
+        assert response.status_code == 400, "Некорректный запрос"
 
 
+    def test_negative_empty_str(self):
         #Проверка пустой строкой
-        login_data_wrong_str = ""
-        response = requests.post(login_url, json= login_data_wrong_str, headers=HEADERS)
+        login_data = ""
+        response = requests.post(TestAuthAPI.LOGIN_URL, json= login_data, headers=HEADERS)
+
         #Логи
         print(f"Response status: {response.status_code}")
         print(f"Response body wrong password: {response.text}")
@@ -129,6 +131,7 @@ class TestAuthAPI:
 
         #Проверки
         assert response.status_code == 400, "Некорректный запрос"
+
 
 
 
