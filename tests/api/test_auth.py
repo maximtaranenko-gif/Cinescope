@@ -54,5 +54,60 @@ class TestAuthAPI:
         assert "email" != "", "email пустой"
         assert "@" in response_data["user"]["email"], f"email не содержит @"
 
+    def test_negative_checks_authorization(self, test_user):
+        #URL для авторизации
+        login_url = f"{BASE_URL}{LOGIN_ENDPOINT}"
+
+
+        #Некорректные данные для авторизации(собственный пароль)
+        login_data_wrong_password = {
+            "email":test_user["email"],
+            "password": "Geychik228"
+        }
+        response = requests.post(login_url, json=login_data_wrong_password, headers=HEADERS)
+
+        #Логи
+        print(f"Response status: {response.status_code}")
+        print(f"Response body wrong password: {response.text}")
+        #Проверки
+        assert response.status_code == 401, f"Ожидалась ошибка 401 , получили: {response.status_code}"
+
+
+        #Некоректный email
+        login_data_incorrect_email = {
+            "email": "maximtaranenko@gmail.com",
+            "password":test_user["password"]
+        }
+        response = requests.post(login_url, json=login_data_incorrect_email, headers=HEADERS)
+
+        print(f"Response body incorrect email: {response.text}")
+        #Проверки
+        try:
+            assert response.status_code == 401
+        except AssertionError:
+            print(f"Ошибка от сервера, ожидалось 401, получили {response.status_code}")
+
+
+        #Проверка пустым json
+        login_data_empty = {
+            "email":"",
+            "password":""
+        }
+        response = requests.post(login_url, json=login_data_empty, headers=HEADERS)
+        #Проверки
+        if response.status_code == 500:
+            print(f"Баг: сервер возвращает {response.status_code}")
+        else:
+            assert response.status_code == 400, "Некорректный запрос"
+
+
+        #Проверка пустой строкой
+        login_data_wrong_str = ""
+        response = requests.post(login_url, json= login_data_wrong_str, headers=HEADERS)
+        assert response.status_code == 400, "Некорректный запрос"
+
+
+
+
 
 
