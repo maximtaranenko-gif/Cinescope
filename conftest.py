@@ -32,7 +32,7 @@ def auth_session(test_user):
         "password": test_user["password"]
     }
     response = requests.post(login_url, json=login_data, headers=HEADERS)
-    assert response.status_code == 200, "Ошибка авторизации"
+    assert response.status_code == 201, "Ошибка авторизации"
 
     #Получаем токен и создаём сессию
     token = response.json().get("accessToken")
