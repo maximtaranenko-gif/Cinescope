@@ -66,7 +66,7 @@ class TestAuthAPI:
 
         #Логи
         print(f"Response status: {response.status_code}")
-        print(f"Response body wrong password: {response.text}")
+        print(f"Response body: {response.text}")
         print("=" * 180)
         #Проверки
         assert response.status_code == 401, f"Ожидалась ошибка 401 , получили: {response.status_code}"
@@ -80,11 +80,9 @@ class TestAuthAPI:
         }
         response = requests.post(TestAuthAPI.LOGIN_URL, json=login_data, headers=HEADERS)
 
-        assert response.status_code == 401, f"Ожидалась ошибка 401, получили: {response.status_code}"
-
         #Логи
         print(f"Response status: {response.status_code}")
-        print(f"Response body wrong password: {response.text}")
+        print(f"Response body: {response.text}")
         print("=" * 180)
 
         #Проверки
@@ -97,7 +95,7 @@ class TestAuthAPI:
 
         #Логи
         print(f"Response status: {response.status_code}")
-        print(f"Response body wrong password: {response.text}")
+        print(f"Response body: {response.text}")
         print("=" * 180)
 
         assert response.status_code == 401, f"Ожидалась ошибка 401, сервер вернул {response.status_code}"
@@ -112,7 +110,7 @@ class TestAuthAPI:
         response = requests.post(TestAuthAPI.LOGIN_URL, json=login_data, headers=HEADERS)
 
         print(f"Response status: {response.status_code}")
-        print(f"Response body wrong password: {response.text}")
+        print(f"Response body: {response.text}")
         print("=" * 180)
         #Проверки
 
@@ -126,7 +124,7 @@ class TestAuthAPI:
 
         #Логи
         print(f"Response status: {response.status_code}")
-        print(f"Response body wrong password: {response.text}")
+        print(f"Response body: {response.text}")
         print("=" * 180)
 
         #Проверки
