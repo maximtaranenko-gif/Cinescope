@@ -1,47 +1,56 @@
 import requests
-from constants import BASE_URL, HEADERS, REGISTER_ENDPOINT, LOGIN_ENDPOINT
+import pytest
+
+from conftest import api_manager
+from constants import BASE_URL, REGISTER_ENDPOINT, LOGIN_ENDPOINT
+from custom_requester.custom_requester import CustomRequester
+from api.api_manager import ApiManager
 
 
 class TestAuthAPI:
-    #Эндпоинт регистрации
-    REGISTER_URL = f"{BASE_URL}{REGISTER_ENDPOINT}"
-    #Эндпоинт авторизации
-    LOGIN_URL = f"{BASE_URL}{LOGIN_ENDPOINT}"
-
-
-    def test_register_user(self, requester, test_user):
-        response = requester.send_request(
-            method="POST",
-            endpoint=REGISTER_ENDPOINT,
-            data=test_user,
-            expected_status=201
-        )
+    def test_register_user(self, api_manager, test_user):
+        """
+        Тест на регистрацию пользователя.
+        """
+        response = api_manager.auth_api.register_user(test_user)
         response_data = response.json()
+
+        # Проверки
         assert response_data["email"] == test_user["email"], "Email не совпадает"
         assert "id" in response_data, "ID пользователя отсутствует в ответе"
         assert "roles" in response_data, "Роли пользователя отсутствуют в ответе"
         assert "USER" in response_data["roles"], "Роль USER должна быть у пользователя"
 
-    def test_authorization_user(self,requester, test_user):
-        #Данные для авторизации
+    def test_register_and_login_user(self, api_manager: ApiManager, registered_user):
+        """
+        Тест на авторизацию уже существующего пользователя
+        """
+
         login_data = {
-            "email":test_user["email"],
-            "password":test_user["password"]
+            "email": registered_user["email"],
+            "password": registered_user["password"]
         }
+        response = api_manager.auth_api.login_user(login_data)
+        response_data = response.json()
 
-        #Отправка запроса на авторизацию
-        response = requester.send_request(
-            method="POST",
-            endpoint=LOGIN_ENDPOINT,
-            data=login_data,
-            expected_status=201)
+        assert "accessToken" in response_data
+        assert response_data["user"]["email"] == registered_user["email"]
 
-        #Проверки
+    def test_login_user(self, api_manager, test_user):
+        """Тест на авторизацию незарезаного юзера"""
+        login_data = {
+            "email": test_user["email"],
+            "password": test_user["password"]
+        }
+        response = api_manager.auth_api.login_user(login_data)
+        response_data = response.json()
+
+        # Проверки
         assert response.status_code == 201, "Авторизация не удалась"
         response_data = response.json()
         assert "accessToken" in response_data, "Токен в ответе отсутствует"
         assert "user" in response_data, "Поле user отсутствует в ответе"
-        #Проверка email
+        # Проверка email
         assert "email" in response_data["user"], "В объекте user отсутствует поле email"
         assert "email" is not None, "email равен None"
         assert "email" != "", "email пустой"
@@ -59,7 +68,6 @@ class TestAuthAPI:
             data=login_data,
             expected_status=401)
 
-        #Проверки
         assert response.status_code == 401, f"Ожидалась ошибка 401 , получили: {response.status_code}"
 
     def test_negative_incorrect_email(self,requester, test_user):
@@ -74,7 +82,6 @@ class TestAuthAPI:
             data=login_data,
             expected_status=401)
 
-        #Проверки
         assert response.status_code == 401, f"Ожидалась ошибка 401, получили {response.status_code}"
 
     def test_negative_empty_body_request(self,requester, test_user):
@@ -83,7 +90,7 @@ class TestAuthAPI:
             method="POST",
             endpoint=LOGIN_ENDPOINT,
             expected_status=401)
-        #Проверки
+
         assert response.status_code == 401, f"Ожидалась ошибка 401, сервер вернул {response.status_code}"
 
 
@@ -99,8 +106,6 @@ class TestAuthAPI:
             data=login_data,
             expected_status=401)
 
-        #Проверки
-
         assert response.status_code == 400, "Некорректный запрос"
 
 
@@ -113,7 +118,6 @@ class TestAuthAPI:
             data=login_data,
             expected_status=400)
 
-        #Проверки
         assert response.status_code == 400, "Некорректный запрос"
 
 

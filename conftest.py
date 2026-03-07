@@ -3,9 +3,25 @@ import pytest
 import requests
 from constants import BASE_URL, REGISTER_ENDPOINT, LOGIN_ENDPOINT
 from custom_requester.custom_requester import CustomRequester
+from api.api_manager import ApiManager
 from utils.data_generator import DataGenerator
 
 faker = Faker()
+
+
+@pytest.fixture(scope="session")
+def session():
+    """
+        Фикстура для создания HTTP-сессии.
+        """
+    http_session = requests.Session()
+    yield http_session
+    http_session.close()
+
+@pytest.fixture(scope="session")
+def api_manager(session):
+    """Фикстура для создания экземпляра APiMANAGER"""
+    return ApiManager(session)
 
 @pytest.fixture(scope="session")
 def test_user():
