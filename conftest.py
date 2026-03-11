@@ -56,6 +56,7 @@ def registered_user(requester, test_user):
     registered_user["id"] = response_data["id"]
     return registered_user
 
+
 @pytest.fixture(scope="session")
 def requester():
     """

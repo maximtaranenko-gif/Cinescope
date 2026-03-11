@@ -31,7 +31,7 @@ class CustomRequester:
         :return: Объект ответа requests.Response.
         """
         url = f"{self.base_url}{endpoint}"
-        response = requests.request(method, url, json=data, headers=self.headers)
+        response = self.session.request(method, url, json=data, headers=self.headers)
         if need_logging:
             self.log_request_and_response(response)
         if response.status_code != expected_status:

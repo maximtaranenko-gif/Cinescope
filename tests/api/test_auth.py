@@ -95,8 +95,28 @@ class TestAuthAPI:
         """Проверка пустой строкой"""
         login_data = ""
         response = api_manager.auth_api.login_user(login_data)
+        response_data = response.json()
+        assert response_data == "accessToken", "Токен отсутствует в ответе"
 
         assert response.status_code == 400, "Некорректный запрос"
+
+    def test_something(self, api_manager, registered_user):
+        """
+        Тест с authenticate (сам сохраняет токен)
+        """
+        # 1. Авторизуемся (authenticate сам сохранит токен)
+        user_creds = (registered_user["email"], registered_user["password"])
+        api_manager.auth_api.authenticate(user_creds)
+
+
+        try:
+            # 2. ТЕСТ
+            response = api_manager.user_api.get_user_info(registered_user["id"])
+            assert response.status_code == 200
+
+        finally:
+            # 3. Удаляем
+            api_manager.user_api.delete_user(registered_user["id"])
 
 
 
