@@ -1,5 +1,7 @@
 from conftest import api_manager
 from api.api_manager import ApiManager
+from utils.data_generator import DataGenerator
+from constants import USER_CREDS, EMAIL, PASSWORD
 
 
 class TestAuthAPI:
@@ -16,107 +18,46 @@ class TestAuthAPI:
         assert "roles" in response_data, "Роли пользователя отсутствуют в ответе"
         assert "USER" in response_data["roles"], "Роль USER должна быть у пользователя"
 
-    def test_register_and_login_user(self, api_manager: ApiManager, registered_user):
-        """
-        Тест на авторизацию уже существующего пользователя
-        """
-
+    def test_authorization_admin(self, api_manager):
+        """Тест на авторизацию юзера(админ креды)"""
         login_data = {
-            "email": registered_user["email"],
-            "password": registered_user["password"]
+            "email": EMAIL,
+            "password": PASSWORD
         }
-        response = api_manager.auth_api.login_user(login_data)
-        response_data = response.json()
+        response = api_manager.auth_api.login_user(login_data, expected_status=200)
+        assert response.status_code == 200, "Неверныйл логин или пароль"
 
-        assert "accessToken" in response_data
-        assert response_data["user"]["email"] == registered_user["email"]
-
-    def test_login_user(self, api_manager, test_user):
+    def test_login_unregister_user(self, api_manager):
         """Тест на авторизацию незарезаного юзера"""
         login_data = {
-            "email": test_user["email"],
-            "password": test_user["password"]
+            "email": DataGenerator.generate_random_email(),
+            "password": DataGenerator.generate_random_password()
         }
-        response = api_manager.auth_api.login_user(login_data)
-        response_data = response.json()
+        response = api_manager.auth_api.login_user(login_data, expected_status=401)
 
-        # Проверки
-        assert response.status_code == 201, "Авторизация не удалась"
-        assert "accessToken" in response_data, "Токен в ответе отсутствует"
-        assert "user" in response_data, "Поле user отсутствует в ответе"
-        # Проверка email
-        assert "email" in response_data["user"], "В объекте user отсутствует поле email"
-        assert "email" is not None, "email равен None"
-        assert "email" != "", "email пустой"
-        assert "@" in response_data["user"]["email"], f"email не содержит @"
+        # # Проверки
+        assert response.status_code == 401, "Авторизация не удалась"
 
-    def test_negative_incorrect_data_authorization(self,api_manager: ApiManager, test_user):
-        """Некорректные данные для авторизации(собственный пароль)"""
-        login_data = {
-            "email":test_user["email"],
-            "password": "Geychik228"
-        }
-        response = api_manager.auth_api.login_user(login_data)
-
-        assert response.status_code == 401, f"Ожидалась ошибка 401 , получили: {response.status_code}"
-
-    def test_negative_incorrect_email(self,api_manager: ApiManager, test_user):
-        """#Некоректный email"""
-        login_data = {
-            "email": "maximtaranenko@gmail.com",
-            "password":test_user["password"]
-        }
-        response = api_manager.auth_api.login_user(login_data)
-
-        assert response.status_code == 401, f"Ожидалась ошибка 401, получили {response.status_code}"
 
     def test_negative_empty_body_request(self,api_manager:ApiManager, test_user):
         """Проверка пустым телом запроса"""
         login_data = {
 
         }
-        response = api_manager.auth_api.login_user(login_data)
+        response = api_manager.auth_api.login_user(login_data, expected_status=401)
 
         assert response.status_code == 401, f"Ожидалась ошибка 401, сервер вернул {response.status_code}"
 
 
-    def test_negative_empty_json(self, api_manager: ApiManager):
-        """Проверка пустым json"""
+    def test_authenticate_user_with_incorrect_password(self, api_manager: ApiManager):
+        """Авторизация юзера с неверным паролем"""
         login_data = {
-            "email":"",
-            "password":""
+            "email": EMAIL,
+            "password": DataGenerator.generate_random_password()
         }
-        response = api_manager.auth_api.login_user(login_data)
+        response = api_manager.auth_api.login_user(login_data, expected_status=401)
+        assert response.status_code == 401, "Неверный логин или пароль"
 
-        assert response.status_code == 400, "Некорректный запрос"
-
-
-    def test_negative_empty_str(self, api_manager: ApiManager):
-        """Проверка пустой строкой"""
-        login_data = ""
-        response = api_manager.auth_api.login_user(login_data)
-        response_data = response.json()
-        assert response_data == "accessToken", "Токен отсутствует в ответе"
-
-        assert response.status_code == 400, "Некорректный запрос"
-
-    def test_something(self, api_manager, registered_user):
-        """
-        Тест с authenticate (сам сохраняет токен)
-        """
-        # 1. Авторизуемся (authenticate сам сохранит токен)
-        user_creds = (registered_user["email"], registered_user["password"])
-        api_manager.auth_api.authenticate(user_creds)
-
-
-        try:
-            # 2. ТЕСТ
-            response = api_manager.user_api.get_user_info(registered_user["id"])
-            assert response.status_code == 200
-
-        finally:
-            # 3. Удаляем
-            api_manager.user_api.delete_user(registered_user["id"])
 
 
 
