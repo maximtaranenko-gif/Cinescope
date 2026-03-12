@@ -1,4 +1,4 @@
-from conftest import api_manager
+from conftest import api_manager, registered_user
 from api.api_manager import ApiManager
 from utils.data_generator import DataGenerator
 from constants import USER_CREDS, EMAIL, PASSWORD
@@ -12,11 +12,17 @@ class TestAuthAPI:
         response = api_manager.auth_api.register_user(test_user)
         response_data = response.json()
 
+        user_creds = (test_user["email"], test_user["password"])
+        auth_data = api_manager.auth_api.authenticate(user_creds)
+
         # Проверки
         assert response_data["email"] == test_user["email"], "Email не совпадает"
         assert "id" in response_data, "ID пользователя отсутствует в ответе"
         assert "roles" in response_data, "Роли пользователя отсутствуют в ответе"
         assert "USER" in response_data["roles"], "Роль USER должна быть у пользователя"
+
+        user_id = response_data['id']
+        api_manager.user_api.delete_user(user_id, expected_status=200)
 
     def test_authorization_admin(self, api_manager):
         """Тест на авторизацию юзера(админ креды)"""

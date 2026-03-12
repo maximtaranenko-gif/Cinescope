@@ -25,6 +25,7 @@ def api_manager(session):
 
 @pytest.fixture(scope="session")
 def test_user():
+
     """
     Генерация случайного пользователя для тестов.
     """
