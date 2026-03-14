@@ -1,7 +1,9 @@
+import random
+
 from faker import Faker
 import pytest
 import requests
-from constants import BASE_URL, REGISTER_ENDPOINT, LOGIN_ENDPOINT
+from constants import BASE_URL, REGISTER_ENDPOINT
 from custom_requester.custom_requester import CustomRequester
 from api.api_manager import ApiManager
 from utils.data_generator import DataGenerator
@@ -58,7 +60,6 @@ def registered_user(auth_requester, test_user):
     registered_user["id"] = response_data["id"]
     return registered_user
 
-
 @pytest.fixture(scope="session")
 def auth_requester():
     """
@@ -66,4 +67,52 @@ def auth_requester():
     """
     session = requests.Session()
     return CustomRequester(session=session, base_url=BASE_URL)
+
+@pytest.fixture
+def movie_data():
+    """Фикстура для создания рандомного фильма(валидные данные)"""
+    data = {
+        "name": faker.sentence(),
+        "imageUrl": "https://allwebs.ru/images/2026/03/14/5a789b9ac9178ace2c2e1c3b2564e64f.jpg",
+        "price": faker.random_int(500, 3000),
+        "description": faker.text(),
+        "location": random.choice(["MSK", "SPB"]),
+        "published": random.choice([True, False]),
+        "genreId": random.randint(1, 20),
+    }
+    return data
+
+@pytest.fixture
+def multiple_movies():
+    """Фикстура с тремя разными фильмами"""
+    movies = []
+    for i in range(3):
+        movie = {
+            "name": faker.sentence(),
+            "imageUrl": "https://allwebs.ru/images/2026/03/14/5a789b9ac9178ace2c2e1c3b2564e64f.jpg",
+            "price": faker.random_int(10, 30000),
+            "description": faker.text(),
+            "location": random.choice(["MSK", "SPB"]),
+            "published": random.choice([True, False]),
+            "genreId": random.randint(1, 5),
+        }
+        movies.append(movie)
+    return movies
+
+@pytest.fixture
+def movie_data_incorrect():
+    """Фикстура для создания рандомного фильма(невалидные данные)"""
+    data = {
+        "name": faker.sentence(),
+        "imageUrl": "https://allwebs.ru/images/2026/03/14/5a789b9ac9178ace2c2e1c3b2564e64f.jpg",
+        "price": faker.random_int(500, 300000),
+        "description": faker.text(),
+        "location": random.choice(["MSK", "SPB"]),
+        "published": random.choice([True, False]),
+        "genreId": random.randint(1, 100),
+    }
+    return data
+
+
+
 

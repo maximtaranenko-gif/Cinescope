@@ -1,4 +1,4 @@
-from conftest import api_manager, registered_user
+from conftest import api_manager
 from api.api_manager import ApiManager
 from utils.data_generator import DataGenerator
 from constants import USER_CREDS, EMAIL, PASSWORD
@@ -13,7 +13,7 @@ class TestAuthAPI:
         response_data = response.json()
 
         user_creds = (test_user["email"], test_user["password"])
-        auth_data = api_manager.auth_api.authenticate(user_creds)
+        api_manager.auth_api.authenticate(user_creds)
 
         # Проверки
         assert response_data["email"] == test_user["email"], "Email не совпадает"
@@ -41,7 +41,7 @@ class TestAuthAPI:
         }
         response = api_manager.auth_api.login_user(login_data, expected_status=401)
 
-        # # Проверки
+        #Проверки
         assert response.status_code == 401, "Авторизация не удалась"
 
 
