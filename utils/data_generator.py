@@ -30,3 +30,18 @@ class DataGenerator:
         random.shuffle(password)
 
         return ''.join(password)
+
+def generate_movie(price_range=(500, 3000), locations = None, genre_range = (1,10)):
+    """Универсальная функция для генерации фильмов"""
+    if locations is None:
+        locations = ["MSK", "SPB"]
+
+    return {
+        "name": faker.sentence(),
+        "imageUrl": "https://allwebs.ru/images/2026/03/14/5a789b9ac9178ace2c2e1c3b2564e64f.jpg",
+        "price": faker.random_int(*price_range),
+        "description": faker.text(),
+        "location": random.choice(locations),
+        "published": random.choice([True, False]),
+        "genreId": random.randint(*genre_range),
+    }
