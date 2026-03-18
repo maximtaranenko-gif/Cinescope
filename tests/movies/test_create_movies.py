@@ -26,9 +26,15 @@ class TestMovieAPI:
         for movie in multiple_movies:
             response = api_manager.movie_api.create_movie(movie, expected_status=201)
             assert response.status_code == 201
-
             movie_data = response.json()
             created_ids.append(movie_data["id"])
+
+
+            assert movie_data["name"] == movie["name"], f"Имя фильма  не совпадает"
+            assert movie_data["price"] == movie["price"], f"Цена фильма  не совпадает"
+            assert movie_data["location"] == movie["location"], f"Локация фильма  не совпадает"
+            assert movie_data["genreId"] == movie["genreId"], f"Жанр фильма не совпадает"
+            assert "id" in movie_data
 
         for movie_id in created_ids:
             api_manager.movie_api.delete_movie(movie_id, expected_status=200)

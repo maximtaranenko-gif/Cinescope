@@ -26,7 +26,7 @@ def api_manager(session):
     return ApiManager(session)
 
 @pytest.fixture(scope="session")
-def test_user():
+def test_user()->dict:
 
     """
     Генерация случайного пользователя для тестов.
@@ -45,7 +45,7 @@ def test_user():
 
 
 @pytest.fixture(scope="function")
-def registered_user(auth_requester, test_user):
+def registered_user(auth_requester, test_user) ->dict:
     """
     Фикстура для регистрации и получения данных зарегистрированного пользователя.
     """
@@ -69,25 +69,37 @@ def auth_requester():
     return CustomRequester(session=session, base_url=BASE_URL)
 
 @pytest.fixture
-def movie_data():
+def movie_data()-> dict:
     """Фикстура для генерации фильма(Валидные данные)"""
     return generate_movie()
 
 
 @pytest.fixture
-def multiple_movies():
-    """Фикстура для генерации нескольких фильмов(Валидные данные)"""
+def multiple_movies()-> list:
+    """Фикстура для генераации нескольких фильмов(Валидные данные)"""
     return [generate_movie() for i in range(3)]
 
 
 @pytest.fixture
-def movie_data_incorrect():
+def movie_data_incorrect()->dict:
     """Фикстура для генерации фильма(Невалидные данные)"""
     return generate_movie(
         price_range=(-100, 300000),
         locations=["SPB", "MSK", "TSK", "NSK"],
         genre_range= (10, 100)
     )
+@pytest.fixture
+def created_movie(api_manager, movie_data):
+    """Фикстура для создания фильма"""
+    api_manager.auth_api.authenticate(USER_CREDS)
+    response = api_manager.movie_api.create_movie(movie_data, expected_status=201)
+    movie = response.json()
+
+    yield movie
+
+    api_manager.movie_api.delete_movie(movie["id"], expected_status=200)
+
+
 
 
 

@@ -27,8 +27,19 @@ class MovieAPI(CustomRequester):
             method="GET",
             endpoint=f"{MOVIE_ENDPOINT}/{movie_id}",
             expected_status=expected_status
-
         )
+    def get_movie_reviews(self, movie_id, expected_status = 200):
+        """
+        Получение информации об отзывах
+        :param movie_id: Уникальный индентификатор для отзыва
+        :param expected_status: Ожидаемый статус код
+        """
+        return self.send_request(
+            method="GET",
+            endpoint=f"{MOVIE_ENDPOINT}/{movie_id}/reviews",
+            expected_status=expected_status
+        )
+
     def get_movies_poster(self, page_size=2, page=1, min_price=50, max_price=5000, locations="SPB", published=True, genre_id=None, created_at="DESC", expected_status = 200):
         """
         Получение афиш фильма

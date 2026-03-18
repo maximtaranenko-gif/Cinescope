@@ -1,40 +1,24 @@
-from conftest import movie_data, movie_data_incorrect
-from constants import USER_CREDS
+from conftest import created_movie
 
 class TestMovieAPI:
-    def test_change_movie(self, api_manager, movie_data):
-        """Тест на изменение фильма"""
-        api_manager.auth_api.authenticate(USER_CREDS)
-
-        create_response = api_manager.movie_api.create_movie(movie_data, expected_status=201)
-        created_movie = create_response.json()
+    def test_change_movie(self, api_manager, created_movie):
+        """Негативный тест: """
         movie_id = created_movie["id"]
 
-        update_data = movie_data.copy()
-        update_data["name"] = "ОБНОВЛЕННЫЙ: " + movie_data["name"][:30]
-        update_data["price"] = movie_data["price"] + 500
-        update_data["published"] = not movie_data["published"]
+        response = api_manager.movie_api.update_movie(movie_id, {"name": "Тест"})
+        assert response.status_code == 200
 
-        update_response = api_manager.movie_api.update_movie(movie_id, update_data, expected_status=200)
-        assert update_response.status_code == 200
-
+        # Проверяем, что название действительно обновилось
         get_response = api_manager.movie_api.get_movie(movie_id)
-        updated_movie = get_response.json()
+        movie = get_response.json()
+        assert movie["name"] == "Тест"
+        # Остальные поля должны остаться без изменений
+        assert movie["price"] == created_movie["price"]
+        assert movie["location"] == created_movie["location"]
 
-        assert updated_movie["name"] == update_data["name"]
-        assert updated_movie["price"] == update_data["price"]
-        assert updated_movie["published"] == update_data["published"]
-
-        assert updated_movie["id"] == movie_id
-
-        api_manager.movie_api.delete_movie(movie_id, expected_status=200)
-
-    def test_change_movie_negative_price(self, api_manager, movie_data):
+    def test_change_movie_negative_price(self, api_manager, created_movie):
         """Негативный тест: попытка установить отрицательную цену"""
-        api_manager.auth_api.authenticate(USER_CREDS)
-        """Создаем фильм"""
-        create_response = api_manager.movie_api.create_movie(movie_data, expected_status=201)
-        movie_id = create_response.json()["id"]
+        movie_id = created_movie["id"]
         """Обновляем цену значением"""
         update_data = {"price": -100}
         update_response = api_manager.movie_api.update_movie(movie_id, update_data, expected_status=400)
@@ -42,6 +26,5 @@ class TestMovieAPI:
 
         get_response = api_manager.movie_api.get_movie(movie_id)
         movie = get_response.json()
-        assert movie["price"] == movie_data["price"]
+        assert movie["price"] == created_movie["price"]
 
-        api_manager.movie_api.delete_movie(movie_id, expected_status=200)
