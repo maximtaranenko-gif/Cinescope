@@ -1,10 +1,10 @@
 from custom_requester.custom_requester import CustomRequester
-from constants import MOVIE_ENDPOINT, GENRE_ENDPOINT
+from constants import MOVIE_ENDPOINT, GENRE_ENDPOINT, MOVIE_URL
 
 
 class MovieAPI(CustomRequester):
     def __init__(self, session):
-        super().__init__(session=session, base_url="https://api.dev-cinescope.coconutqa.ru")
+        super().__init__(session=session, base_url=f"{MOVIE_URL}")
 
     def create_movie(self, movie_data:dict, expected_status:int = 201):
         """

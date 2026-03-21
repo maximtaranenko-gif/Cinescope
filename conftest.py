@@ -4,7 +4,7 @@ import uuid
 from faker import Faker
 import pytest
 import requests
-from constants import BASE_URL, REGISTER_ENDPOINT, ADMIN_CREDS
+from constants import REGISTER_ENDPOINT, ADMIN_CREDS, AUTH_URL
 from custom_requester.custom_requester import CustomRequester
 from api.api_manager import ApiManager
 from utils.data_generator import DataGenerator, generate_movie
@@ -67,7 +67,7 @@ def auth_requester()->CustomRequester:
     Фикстура для создания экземпляра CustomRequester.
     """
     session = requests.Session()
-    return CustomRequester(session=session, base_url=BASE_URL)
+    return CustomRequester(session=session, base_url=AUTH_URL)
 
 @pytest.fixture
 def movie_data()-> dict:

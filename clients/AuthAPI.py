@@ -1,11 +1,12 @@
 from constants import REGISTER_ENDPOINT, LOGIN_ENDPOINT, LOGOUT_ENDPOINT, REFRESH_TOKEN_ENDPOINT, CREATE_USER, \
     GET_LIST_USER
 from custom_requester.custom_requester import CustomRequester
+from constants import AUTH_URL
 
 
 class AuthAPI(CustomRequester):
     def __init__(self, session):
-        super().__init__(session=session,base_url="https://auth.dev-cinescope.coconutqa.ru")
+        super().__init__(session=session,base_url=f"{AUTH_URL}")
 
 
     def register_user(self, user_data:dict, expected_status:int = 201):

@@ -79,4 +79,3 @@ class TestMovieAPI:
             "name": "ABOBA"
         }
         api_manager.movie_api.create_genres(genre_data, expected_status=403)
-

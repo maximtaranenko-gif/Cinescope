@@ -1,4 +1,5 @@
-BASE_URL = "https://auth.dev-cinescope.coconutqa.ru"
+AUTH_URL = "https://auth.dev-cinescope.coconutqa.ru"
+MOVIE_URL = "https://api.dev-cinescope.coconutqa.ru"
 EMAIL = 'api1@gmail.com'
 PASSWORD = 'asdqwe123Q'
 ADMIN_CREDS = (EMAIL, PASSWORD)

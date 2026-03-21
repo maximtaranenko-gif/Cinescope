@@ -54,5 +54,3 @@ class TestMovieAPI:
     def test_get_genre_by_incorrect_id(self, api_manager:ApiManager):
         """Негативный тест на отображение жанра по ID"""
         api_manager.movie_api.getting_genre_by_id("f", expected_status=404)
-
-

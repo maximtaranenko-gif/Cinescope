@@ -34,7 +34,7 @@ class TestAuthAPI:
             "email": EMAIL,
             "password": PASSWORD
         }
-        response = api_manager.auth_api.login_user(login_data, expected_status=200)
+        api_manager.auth_api.login_user(login_data, expected_status=200)
 
     def test_login_unregister_user(self, api_manager:ApiManager):
         """Тест на авторизацию незарезаного юзера"""

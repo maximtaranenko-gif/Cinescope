@@ -67,5 +67,3 @@ class TestMovieAPI:
         """Негативный тест: удаление жанра(Здесь та же самая история, нужен суперадмин, у Ромы только ADMIN)"""
         api_manager.auth_api.authenticate(ADMIN_CREDS)
         api_manager.movie_api.delete_genre(5, expected_status=403)
-
-

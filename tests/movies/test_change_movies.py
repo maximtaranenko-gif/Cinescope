@@ -135,7 +135,3 @@ class TestMovieAPI:
         user_id = "a76b8bf9-af13-45bb-b200-b9db86db26d3"
 
         api_manager.movie_api.hide_review_movie(fake_movie_id, user_id, expected_status=404)
-
-
-
-
