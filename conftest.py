@@ -1,9 +1,10 @@
 import random
+import uuid
 
 from faker import Faker
 import pytest
 import requests
-from constants import BASE_URL, REGISTER_ENDPOINT, USER_CREDS
+from constants import BASE_URL, REGISTER_ENDPOINT, ADMIN_CREDS
 from custom_requester.custom_requester import CustomRequester
 from api.api_manager import ApiManager
 from utils.data_generator import DataGenerator, generate_movie
@@ -25,7 +26,7 @@ def api_manager(session):
     """Фикстура для создания экземпляра APiMANAGER"""
     return ApiManager(session)
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def test_user()->dict:
 
     """
@@ -36,7 +37,7 @@ def test_user()->dict:
     random_password = DataGenerator.generate_random_password()
 
     return {
-        "email": random_email,
+        "email": faker.email(),
         "fullName": random_name,
         "password": random_password,
         "passwordRepeat": random_password,
@@ -61,7 +62,7 @@ def registered_user(auth_requester, test_user) ->dict:
     return registered_user
 
 @pytest.fixture(scope="session")
-def auth_requester():
+def auth_requester()->CustomRequester:
     """
     Фикстура для создания экземпляра CustomRequester.
     """
@@ -89,9 +90,9 @@ def movie_data_incorrect()->dict:
         genre_range= (10, 100)
     )
 @pytest.fixture
-def created_movie(api_manager, movie_data):
+def created_movie(api_manager, movie_data:dict):
     """Фикстура для создания фильма"""
-    api_manager.auth_api.authenticate(USER_CREDS)
+    api_manager.auth_api.authenticate(ADMIN_CREDS)
     response = api_manager.movie_api.create_movie(movie_data, expected_status=201)
     movie = response.json()
 
