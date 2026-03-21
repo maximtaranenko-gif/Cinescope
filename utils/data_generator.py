@@ -44,4 +44,5 @@ def generate_movie(price_range=(500, 3000), locations = None, genre_range = (1,1
         "location": random.choice(locations),
         "published": random.choice([True, False]),
         "genreId": random.randint(*genre_range),
+        "rating": random.randint(1, 5),
     }
