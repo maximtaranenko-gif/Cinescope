@@ -2,6 +2,7 @@ from constants import REGISTER_ENDPOINT, LOGIN_ENDPOINT, LOGOUT_ENDPOINT, REFRES
     GET_LIST_USER
 from custom_requester.custom_requester import CustomRequester
 from constants import AUTH_URL
+from typing import Union
 
 
 class AuthAPI(CustomRequester):
@@ -18,7 +19,7 @@ class AuthAPI(CustomRequester):
             expected_status=expected_status
         )
 
-    def login_user(self, login_data:dict, expected_status:int = 200):
+    def login_user(self, login_data:dict, expected_status:int= 200):
         """Login user"""
         return self.send_request(
             method="POST",

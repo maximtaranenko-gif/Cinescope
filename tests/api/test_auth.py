@@ -88,7 +88,7 @@ class TestAuthAPI:
         api_manager.auth_api.get_user_info(user_id, expected_status=200)
 
     def test_admin_change_user_info(self, api_manager: ApiManager, test_user: dict):
-        """Негативный тест: проверка на изменения полей у юзера под кредами админа"""
+        """Позитивный тест тест: проверка на изменения полей у юзера под кредами админа"""
         register_response = api_manager.auth_api.register_user(test_user)
         user_data = register_response.json()
         user_id = user_data["id"]
@@ -101,7 +101,7 @@ class TestAuthAPI:
             "banned": False
         }
 
-        api_manager.auth_api.change_user_info(user_id, update_data, expected_status=403)
+        api_manager.auth_api.change_user_info(user_id, update_data, expected_status=200)
 
     def test_create_user(self, api_manager: ApiManager):
         """Позитивный тест на создание юзера"""
@@ -173,3 +173,10 @@ class TestAuthAPI:
         """Несуществующий юзер"""
         user_id = "123e4567-e89b-12d3-a456-426614174000"
         clean_manager.auth_api.delete_user(user_id, expected_status=401)
+
+    def test_get_user_by_id_common_user(self, common_user):
+        common_user.api.user_api.get_user(common_user.email, expected_status=403)
+
+    def test_admin_create_movie_permission(self, movie_data:dict, api_manager:ApiManager, admin):
+        """Негативный тест: попытка создать фильм под ролью ADMIN(недоступная роль для создания фильма)"""
+        admin.api.movie_api.create_movie(movie_data, expected_status=403)

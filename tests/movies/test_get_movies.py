@@ -1,13 +1,11 @@
 from api.api_manager import ApiManager
-from constants import ADMIN_CREDS
 from conftest import created_movie
-
+import pytest
 
 class TestMovieAPI:
-    def test_get_movies_poster(self, api_manager:ApiManager):
+    def test_get_movies_poster(self, api_manager:ApiManager, super_admin):
         """Позитивный тест на получение фильмов с пагинацией"""
-        api_manager.auth_api.authenticate(ADMIN_CREDS)
-        response = api_manager.movie_api.get_movies_poster()
+        response = super_admin.api.movie_api.get_movies_poster()
         assert response.status_code == 200, "Некорректные данные"
 
         response_data = response.json()
@@ -28,10 +26,9 @@ class TestMovieAPI:
         assert response_data["name"] == created_movie["name"]
         assert response_data["price"] == created_movie["price"]
 
-    def test_incorrect_get_movie(self, api_manager:ApiManager):
+    def test_incorrect_get_movie(self, api_manager:ApiManager, super_admin):
         """Негативный тест на поиск несуществующего фильма"""
-        api_manager.auth_api.authenticate(ADMIN_CREDS)
-        api_manager.movie_api.get_movie(1, expected_status=404)
+        super_admin.api.movie_api.get_movie(1, expected_status=404)
 
     def test_get_movie_review(self, api_manager:ApiManager,created_movie:dict):
         """Позитивный тест, проверка на получение отзыва о фильме"""
@@ -54,3 +51,29 @@ class TestMovieAPI:
     def test_get_genre_by_incorrect_id(self, api_manager:ApiManager):
         """Негативный тест на отображение жанра по ID"""
         api_manager.movie_api.getting_genre_by_id("f", expected_status=404)
+
+    def test_get_movie_by_default_user(self, api_manager:ApiManager,created_movie:dict, common_user):
+        """Позитивный тест: Пользователь с ролью USER может получать ответ от сервера с фильмами"""
+        movie_id = created_movie["id"]
+        common_user.api.movie_api.get_movie(movie_id, expected_status=200)
+
+
+@pytest.mark.parametrize("price, locations, genreId, expected_status", [
+    (500, "SPB", 2, 200),
+    (-1, "MSK", 4, 400),
+    (998, "TSK", 3, 400),
+    (995, "MSK", "lol", 400)
+], ids=["Correct data", "incorrect price", "incorrect location", "incorrect data genreId"])
+def test_get_movie_pagination(api_manager: ApiManager, price: int, locations: str, genreId: int, expected_status: int):
+    response = api_manager.movie_api.get_movies_poster(
+        minPrice=price,
+        maxPrice = 1000,
+        locations=locations,
+        genreId=genreId,
+        expected_status=expected_status
+    )
+    if expected_status == 200:
+        data = response.json()
+        movies = data.get("movies", [])
+        # total_count = data.get("count", 0)
+        assert len(movies) > 0, "Пустой массив без фильмов"
