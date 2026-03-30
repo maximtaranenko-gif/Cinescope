@@ -1,7 +1,3 @@
-import random
-import uuid
-
-
 from faker import Faker
 import pytest
 import requests
@@ -50,23 +46,29 @@ def user_session():
 def common_user(user_session, super_admin, creation_user_data):
     new_session = user_session()
 
+    response = super_admin.api.user_api.create_user(creation_user_data)
+    assert response.status_code == 201
+    user_id = response.json()["id"]
+
     common_user = User(
         creation_user_data['email'],
         creation_user_data['password'],
         [Roles.USER.value],
         new_session)
 
-    super_admin.api.user_api.create_user(creation_user_data)
+    # Cleanup
     common_user.api.auth_api.authenticate(common_user.creds)
-    return common_user
+    yield common_user
+    super_admin.api.auth_api.delete_user(user_id, expected_status=200)
 
 
 @pytest.fixture
-def admin(user_session, super_admin, creation_user_data):
+def admin(user_session, super_admin, creation_user_data, api_manager):
     new_session = user_session()
 
     admin_data = creation_user_data.copy()
     admin_data['roles'] = [Roles.USER.value,Roles.ADMIN.value]
+    admin_data["email"] = DataGenerator.generate_random_email()
 
     admin = User(
         admin_data['email'],
@@ -78,17 +80,15 @@ def admin(user_session, super_admin, creation_user_data):
     create_response = super_admin.api.user_api.create_user(admin_data, expected_status=201)
     user_id = create_response.json()['id']
 
-    # Обновляем роль (только нужные поля, динамически)
+    # Обновляем роль
     fields_to_update = ["roles", "verified", "banned"]
     update_data = {key: admin_data[key] for key in fields_to_update}
-
     super_admin.api.user_api.update_role_user_admin(user_id, update_data, expected_status=200)
-
     # Авторизуемся
     admin.api.auth_api.authenticate(admin.creds)
-
-    return admin
-
+    # Cleanup
+    yield admin
+    super_admin.api.auth_api.delete_user(user_id, expected_status=200)
 
 @pytest.fixture
 def super_admin(user_session, api_manager):

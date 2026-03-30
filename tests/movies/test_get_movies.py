@@ -64,7 +64,7 @@ class TestMovieAPI:
     (998, "TSK", 3, 400),
     (995, "MSK", "lol", 400)
 ], ids=["Correct data", "incorrect price", "incorrect location", "incorrect data genreId"])
-def test_get_movie_pagination(api_manager: ApiManager, price: int, locations: str, genreId: int, expected_status: int):
+def test_get_movie_pagination(price: int, locations: str, genreId: int, expected_status: int, api_manager: ApiManager, ):
     response = api_manager.movie_api.get_movies_poster(
         minPrice=price,
         maxPrice = 1000,
@@ -75,5 +75,4 @@ def test_get_movie_pagination(api_manager: ApiManager, price: int, locations: st
     if expected_status == 200:
         data = response.json()
         movies = data.get("movies", [])
-        # total_count = data.get("count", 0)
         assert len(movies) > 0, "Пустой массив без фильмов"
