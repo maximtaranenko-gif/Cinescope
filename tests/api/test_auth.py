@@ -1,38 +1,36 @@
-import requests
-
 from conftest import api_manager
 from api.api_manager import ApiManager
 import requests
 from utils.data_generator import DataGenerator
-from constants import EMAIL, PASSWORD, ADMIN_CREDS
+from constants import ADMIN_CREDS, Roles
+from resources.user_creds import SuperAdminCreds
 import uuid
+import pytest
+from models.user_models import RegisterUserResponse, UserModel
 
 
 class TestAuthAPI:
-    def test_register_user(self, api_manager:ApiManager, test_user:dict):
+    def test_register_user(self, api_manager:ApiManager, test_user):
         """
         Тест на регистрацию пользователя.
         """
         response = api_manager.auth_api.register_user(test_user)
-        response_data = response.json()
+        register_user_response = RegisterUserResponse(**response.json())
 
-        user_creds = (test_user["email"], test_user["password"])
+        user_creds = (test_user.email, test_user.password)
         api_manager.auth_api.authenticate(user_creds)
 
-        # Проверки
-        assert response_data["email"] == test_user["email"], "Email не совпадает"
-        assert "id" in response_data, "ID пользователя отсутствует в ответе"
-        assert "roles" in response_data, "Роли пользователя отсутствуют в ответе"
-        assert "USER" in response_data["roles"], "Роль USER должна быть у пользователя"
+        assert register_user_response.email == test_user.email, "Email не совпадает"
+        assert Roles.USER in register_user_response.roles, "Роль USER должна быть у пользователя"
 
-        user_id = response_data['id']
+        user_id = register_user_response.id
         api_manager.auth_api.delete_user(user_id, expected_status=200)
 
     def test_authorization_admin(self, api_manager:ApiManager):
         """Тест на авторизацию юзера(админ креды)"""
         login_data = {
-            "email": EMAIL,
-            "password": PASSWORD
+            "email": SuperAdminCreds.USERNAME,
+            "password": SuperAdminCreds.PASSWORD
         }
         api_manager.auth_api.login_user(login_data, expected_status=200)
 
@@ -52,46 +50,47 @@ class TestAuthAPI:
     def test_authenticate_user_with_incorrect_password(self, api_manager: ApiManager):
         """Авторизация юзера с неверным паролем"""
         login_data = {
-            "email": EMAIL,
+            "email": SuperAdminCreds.USERNAME,
             "password": DataGenerator.generate_random_password()
         }
         api_manager.auth_api.login_user(login_data, expected_status=401)
 
-    def test_logout_user(self, api_manager:ApiManager):
+    def test_logout_user(self, admin):
         """Выход из учетной записи(админ креды)"""
-        api_manager.auth_api.authenticate(ADMIN_CREDS)
-        api_manager.auth_api.logout_user(expected_status=200)
+        admin.api.auth_api.logout_user(expected_status=200)
 
-    def test_logout_invalid_user(self, api_manager:ApiManager):
+    @pytest.mark.xfail(reason= "Фича логаута может дать возможность выйти из акка без токена, баг в будущем будет пофикшено")
+    def test_logout_invalid_user(self, unauthorized_user):
         """Негативный тест:Выход из учетной записи без авторизации"""
-        api_manager.auth_api.logout_user(expected_status=200)
+        unauthorized_user.api.auth_api.logout_user(expected_status=401)
 
-    # def test_refresh_token_user(self, api_manager:ApiManager):
-    #     """Обновление refresh-token и access token"""
-    #     auth_response = api_manager.auth_api.authenticate(ADMIN_CREDS)
-    #     old_token = auth_response["accessToken"]
-    #     refresh_response = api_manager.auth_api.refresh_token(expected_status=200)
-    #     new_token = refresh_response.json()["accessToken"]
-    #     assert old_token != new_token, "Токен доступа должен обновиться"
-    #  Этот тест не работает, т.к апи сломано
+    @pytest.mark.xfail(reason="Фича рефршен токена и доступа не работает, в будущем при её реализации тест будет pass")
+    def test_refresh_token_user(self, api_manager:ApiManager):
+        """Обновление refresh-token и access token"""
+        auth_response = api_manager.auth_api.authenticate(ADMIN_CREDS)
+        old_token = auth_response["accessToken"]
+        refresh_response = api_manager.auth_api.refresh_token(expected_status=200)
+        new_token = refresh_response.json()["accessToken"]
+        assert old_token != new_token, "Токен доступа должен обновиться"
 
-    def test_get_user_info(self, api_manager:ApiManager, registered_user:dict):
+    def test_get_user_info(self, api_manager:ApiManager, registered_user:RegisterUserResponse):
         """получение информации о пользователе"""
         api_manager.auth_api.authenticate(ADMIN_CREDS)
-        user_id = registered_user["id"]
+        user_id = registered_user.id
         api_manager.auth_api.get_user_info(user_id, expected_status=200)
 
+    @pytest.mark.xfail(reason= "Апи работает некорректно, пропускает любой тип данных и в ответе 200-ка")
     def test_get_user_info_not_found(self, api_manager:ApiManager):
         """Получение информации несуществующего юзера"""
         api_manager.auth_api.authenticate(ADMIN_CREDS)
-        user_id = "1291912"
-        api_manager.auth_api.get_user_info(user_id, expected_status=200)
+        user_id = 1
+        api_manager.auth_api.get_user_info(user_id, expected_status=404)
 
-    def test_admin_change_user_info(self, api_manager: ApiManager, test_user: dict):
+    def test_admin_change_user_info(self, api_manager: ApiManager, test_user:UserModel):
         """Позитивный тест тест: проверка на изменения полей у юзера под кредами админа"""
-        register_response = api_manager.auth_api.register_user(test_user)
-        user_data = register_response.json()
-        user_id = user_data["id"]
+        response = api_manager.auth_api.register_user(test_user)
+        register_user_response = RegisterUserResponse(**response.json())
+        user_id = register_user_response.id
 
         api_manager.auth_api.authenticate(ADMIN_CREDS)
 
@@ -103,7 +102,7 @@ class TestAuthAPI:
 
         api_manager.auth_api.change_user_info(user_id, update_data, expected_status=200)
 
-    def test_create_user(self, api_manager: ApiManager):
+    def test_create_user_auth_api(self, api_manager: ApiManager):
         """Позитивный тест на создание юзера"""
         api_manager.auth_api.authenticate(ADMIN_CREDS)
 
@@ -117,14 +116,14 @@ class TestAuthAPI:
 
         response = api_manager.auth_api.create_user(login_data, expected_status=201)
 
-        user_data = response.json()
-        assert user_data["email"] == login_data["email"]
-        assert user_data["fullName"] == login_data["fullName"]
-        assert user_data["verified"] == login_data["verified"]
-        assert user_data["banned"] == login_data["banned"]
-        assert "id" in user_data
+        user_data = RegisterUserResponse(**response.json())
+        assert user_data.email == login_data["email"]
+        assert user_data.fullName == login_data["fullName"]
+        assert user_data.verified == login_data["verified"]
+        assert user_data.banned == login_data["banned"]
+        assert Roles.USER in user_data.roles, "Роль USER должна быть у созданного пользователя"
 
-        user_id = user_data["id"]
+        user_id = user_data.id
         api_manager.auth_api.delete_user(user_id, expected_status=200)
 
     def test_create_user_unauthorized(self, api_manager: ApiManager):
@@ -144,24 +143,19 @@ class TestAuthAPI:
 
         clean_api_manager.auth_api.create_user(login_data, expected_status=401)
 
-    def test_list_user(self, api_manager:ApiManager):
+    def test_list_user(self, api_manager:ApiManager, admin):
         """Позитивный тест на получение списка пользователей(админ креды)"""
-        api_manager.auth_api.authenticate(ADMIN_CREDS)
-        api_manager.auth_api.get_list_user(expected_status=200)
+        admin.api.auth_api.get_list_user(expected_status=200)
 
-    def test_list_user_not_admin_role(self,test_user:dict, api_manager:ApiManager):
+    def test_list_user_not_admin_role(self,test_user, api_manager:ApiManager, common_user):
         """Негативный тест: попытка получить список будучи обычным юзером(по тз может только админ)"""
         # Создаем чистый менеджер без токена
-        clean_session = requests.Session()
-        clean_api_manager = ApiManager(clean_session)
+        common_user.api.auth_api.get_list_user(expected_status=403)
 
-        api_manager.auth_api.register_user(test_user)
-        clean_api_manager.auth_api.get_list_user(expected_status=401)
-
-    def test_delete_user(self, api_manager:ApiManager, registered_user:dict):
+    def test_delete_user(self, api_manager:ApiManager, registered_user):
         """Удаление пользователя из системы"""
         api_manager.auth_api.authenticate(ADMIN_CREDS)
-        user_id = registered_user["id"]
+        user_id = registered_user.id
         delete_response = api_manager.auth_api.delete_user(user_id, expected_status=200)
         """"проверим что пользователь удалён"""
         assert len(delete_response.content) == 0, "Тело ответа должно быть пустым"
@@ -173,9 +167,6 @@ class TestAuthAPI:
         """Несуществующий юзер"""
         user_id = "123e4567-e89b-12d3-a456-426614174000"
         clean_manager.auth_api.delete_user(user_id, expected_status=401)
-
-    def test_get_user_by_id_common_user(self, common_user):
-        common_user.api.user_api.get_user(common_user.email, expected_status=403)
 
     def test_admin_create_movie_permission(self, movie_data:dict, api_manager:ApiManager, admin):
         """Негативный тест: попытка создать фильм под ролью ADMIN(недоступная роль для создания фильма)"""

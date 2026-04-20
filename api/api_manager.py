@@ -11,4 +11,6 @@ class ApiManager:
         self.user_api = UserAPI(session)
 
     def close_session(self):
+        self.session.headers.clear()
+        self.session.cookies.clear()
         self.session.close()

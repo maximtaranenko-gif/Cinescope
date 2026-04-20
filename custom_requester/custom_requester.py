@@ -3,6 +3,7 @@ import json
 import requests
 import logging
 import os
+from models.user_models import BaseModel
 
 class CustomRequester:
     """
@@ -31,7 +32,9 @@ class CustomRequester:
         :return: Объект ответа requests.Response.
         """
         url = f"{self.base_url}{endpoint}"
-        response = self.session.request(method, url, json=data, headers=self.headers, params=params)
+        if isinstance(data, BaseModel):
+            data = json.loads(data.model_dump_json(exclude_unset=True))
+        response = self.session.request(method, url, json=data, params=params)
         if need_logging:
             self.log_request_and_response(response)
         if response.status_code != expected_status:
@@ -60,6 +63,8 @@ class CustomRequester:
             if hasattr(request, 'body') and request.body is not None:
                 if isinstance(request.body, bytes):
                     body = request.body.decode('utf-8')
+                elif isinstance(request.body, str):
+                    body = request.body
                 body = f"-d '{body}' \n" if body != '{}' else ''
 
             self.logger.info(f"\n{'=' * 40} REQUEST {'=' * 40}")
