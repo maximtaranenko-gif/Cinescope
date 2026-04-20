@@ -18,7 +18,7 @@ class AuthAPI(CustomRequester):
             expected_status=expected_status
         )
 
-    def login_user(self, login_data:dict, expected_status:int = 200):
+    def login_user(self, login_data:dict, expected_status:int= 200):
         """Login user"""
         return self.send_request(
             method="POST",

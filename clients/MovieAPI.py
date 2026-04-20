@@ -80,18 +80,18 @@ class MovieAPI(CustomRequester):
         params = {
             "pageSize" : 2,
             "page": 1,
-            "min_price": 50,
-            "max_price": 5000,
+            "minPrice": 50,
+            "maxPrice": 1000,
             "locations": "SPB",
             "published": True,
-            "genreId": 5,
-            "createdAt": "DESC"
+            "genreId": 2,
+            "createdAt": "desc"
         }
         params.update(kwargs)
         return self.send_request(
             method="GET",
             endpoint=MOVIE_ENDPOINT,
-            data = params,
+            params = params,
             expected_status=expected_status
         )
     def get_genre_movie(self, expected_status:int = 200):

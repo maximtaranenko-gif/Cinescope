@@ -10,3 +10,10 @@ __pycache__/
 *.csv
 .token
 .env
+db_requester/sql_alchemy_client_simple_example.py
+tests/api/test_other_api.py
+test_services/service_what_is_today.py
+PydanticExample
+allure-results/
+allure-report/
+Mock/

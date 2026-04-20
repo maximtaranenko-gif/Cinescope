@@ -1,3 +1,4 @@
+import datetime
 import random
 import string
 from faker import Faker
@@ -22,7 +23,7 @@ class DataGenerator:
         #Случайные символы
         special_chars = "?@#$%^&*|:"
         all_chars = string.ascii_letters + string.digits + special_chars
-        remaining_length = random.randint(6, 18) #Остальная длина пароля
+        remaining_length = random.randint(6, 16) #Остальная длина пароля
         remaining_chars = ''.join(random.choices(all_chars, k=remaining_length))
 
         #Перемешиваем пароль для рандомизации
@@ -30,8 +31,29 @@ class DataGenerator:
         random.shuffle(password)
 
         return ''.join(password)
+    @staticmethod
+    def generate_user_data()->dict:
+        """Генерирует данные для тестового пользователя"""
+        from uuid import uuid4
 
-def generate_movie(price_range=(500, 3000), locations = None, genre_range = (1,10)):
+        return {
+            'id': f'{uuid4()}',
+            'email': DataGenerator.generate_random_email(),
+            'full_name': DataGenerator.generate_random_name(),
+            'password': DataGenerator.generate_random_password(),
+            'created_at': datetime.datetime.now(),
+            'updated_at': datetime.datetime.now(),
+            'verified': False,
+            'banned': False,
+            'roles': '{USER}'
+        }
+
+    @staticmethod
+    def generate_random_int(n):
+        return random.randint(1, n)
+
+
+def generate_movie(price_range=(500, 3000), locations = None, genre_range = (1,4)):
     """Универсальная функция для генерации фильмов"""
     if locations is None:
         locations = ["MSK", "SPB"]
