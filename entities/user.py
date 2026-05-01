@@ -1,13 +1,19 @@
+from pydantic import BaseModel, ConfigDict
+from typing import List, Optional
 from api.api_manager import ApiManager
+from constants import Roles
+from models.user_models import LoginRequest
 
-class User:
-    def __init__(self, email:str, password:str, roles:list, api:ApiManager):
-        self.email = email
-        self.password = password
-        self.roles = roles
-        self.api = api
+
+class User(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    email: str
+    password: str
+    roles: List[Roles]
+    api: ApiManager
+    id: Optional[str] = None
 
     @property
-    def creds(self):
-        """Возвращает кортеж email и password"""
-        return self.email , self.password
+    def creds(self) -> LoginRequest:
+        return LoginRequest(email=self.email, password=self.password)

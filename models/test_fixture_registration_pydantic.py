@@ -1,3 +1,4 @@
+import allure
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from venv import logger
 from typing import List, Optional
@@ -34,7 +35,12 @@ class RegistrationUserData(BaseModel):
             raise ValueError('Пароли не совпадают')
         return value
 
+@allure.epic("Cinescope")
+@allure.feature("Валидация Pydantic моделей")
 class TestRegistrationUserData:
+
+    @allure.tag("smoke", "registration", "pydantic")
+    @allure.title("Проверка RegistrationUserData из фикстуры test_user")
     def test_registration_user_data_fixture(self, test_user):
         user_data = RegistrationUserData(**test_user.model_dump())
         assert user_data.email == test_user.email
@@ -46,6 +52,8 @@ class TestRegistrationUserData:
         json_data = user_data.model_dump_json(exclude_unset=True)
         logger.info(json_data)
 
+    @allure.tag("regression", "creation", "pydantic")
+    @allure.title("Проверка RegistrationUserData из фикстуры creation_user_data")
     def test_creation_user_data_fixture(self, creation_user_data):
         """Проверка creation_user_data через Pydantic"""
         user_data = RegistrationUserData(**creation_user_data.model_dump())

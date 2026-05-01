@@ -2,56 +2,95 @@ import pytest
 import logging
 import allure
 
+from db_requester.db_helpers import DBHelper
+from entities.user import User
+from models.movies_models import MovieModel, MovieUpdate
+from soft_assert import assert_equal
+
 logger = logging.getLogger(__name__)
 
+
+@allure.epic("Cinescope")
+@allure.feature("База данных фильмы")
+@pytest.mark.api
+@pytest.mark.db
+@pytest.mark.crud
+@pytest.mark.movies
 class TestMovieDB:
-    @allure.feature("База данных фильмы")
-    @allure.story("CRUD фильмов(Создание, чтение, редактирование,удаление фильмов из БД)")
-    @allure.severity(allure.severity_level.BLOCKER)
-    @allure.title("Создание фильма через API с проверкой БД на каждом этапе")
-    def test_movie_crud_with_db_check(self, super_admin,db_helper, movie_data):
-        with allure.step("Создание фильма"):
-            response = super_admin.api.movie_api.create_movie(movie_data, expected_status=201) #Создали фильм
-        api_movie = response.json()
-        movie_id = api_movie['id']
 
-        logger.info(f"Response api: id={movie_id}, name={api_movie['name']}")
+    @allure.story("Создание фильмов")
+    @allure.severity(allure.severity_level.CRITICAL)
+    @allure.title("Создание фильма через API с проверкой в БД")
+    @pytest.mark.smoke
+    @pytest.mark.regression
+    @pytest.mark.db
+    def test_create_movie_db_check(self, super_admin: User, db_helper: DBHelper, movie_data: MovieModel):
+        with allure.step("Создание фильма через API"):
+            api_movie = super_admin.api.movie_api.create_movie(movie_data, expected_status=201)
+            movie_id = api_movie.id
 
-        with allure.step("Проверки, что фильм в БД появился"):
+        with allure.step("Проверка, что фильм появился в БД с корректными данными"):
             db_movie = db_helper.get_movie_by_id(movie_id)
-            assert db_movie.id == api_movie['id']
-            assert db_movie.name == api_movie['name']
-            assert db_movie.price == api_movie['price']
-            assert db_movie.rating == api_movie['rating']
+            assert_equal(db_movie.id, api_movie.id, "ID фильма в БД не совпадает")
+            assert_equal(db_movie.name, api_movie.name, "Название не совпадает")
+            assert_equal(db_movie.price, api_movie.price, "Цена не совпадает")
+            assert_equal(db_movie.rating, api_movie.rating, "Рейтинг не совпадает")
 
-        logger.info(f"Фильм в базе данных найден, данные совпадают")
-
-        with allure.step("Получение фильма"):
-            get_response = super_admin.api.movie_api.get_movie(movie_id, expected_status=200)
-        get_movie = get_response.json()
-
-        with allure.step("Проверки получение фильма(API)"):
-            assert get_movie['id'] == movie_id
-            assert get_movie['name'] == movie_data['name']
-        logger.info(f"API вернул верные данные")
-
-        with allure.step("Проверка, что данные остались теми же"):
-            db_movie_after_get = db_helper.get_movie_by_id(movie_id)
-            assert db_movie_after_get.name == movie_data['name']
-
-        # Обновим данные о фильме через API
-        update_data = {
-            "price": 100,
-        }
-        with allure.step("Обновим данные о фильме через апи"):
-            super_admin.api.movie_api.update_movie(movie_id, update_data, expected_status=200)
-        with allure.step("Проверка с БД, что данные теже"):
-            db_movie_after_update = db_helper.get_movie_by_id(movie_id)
-        if db_movie_after_update.price != update_data['price']:
-            pytest.xfail(reason="Баг: цена не обновляется в БД, но апишка меняет цену")
-
-        with allure.step("Вызовем метод delete и проверим в БД существует ли фильм"):
+        with allure.step("Удаление фильма"):
             super_admin.api.movie_api.delete_movie(movie_id, expected_status=200)
-        with allure.step("Получим фильм из БД и проверим, существует ли он"):
-            db_movie_after_delete = db_helper.get_movie_by_id(movie_id)
-            assert db_movie_after_delete is None, f"Фильм {movie_id} не должен существовать"
+
+    @allure.story("Получение фильма")
+    @allure.severity(allure.severity_level.CRITICAL)
+    @allure.title("Получение фильма через API с проверкой соответствия БД")
+    @pytest.mark.smoke
+    @pytest.mark.regression
+    @pytest.mark.db
+    def test_get_movie_db_check(self, super_admin: User, db_helper: DBHelper, movie_data: MovieModel):
+        with allure.step("Подготовка: создание фильма"):
+            api_movie = super_admin.api.movie_api.create_movie(movie_data, expected_status=201)
+            movie_id = api_movie.id
+
+        with allure.step("Получение фильма через API и проверка с БД"):
+            get_response = super_admin.api.movie_api.get_movie(movie_id, expected_status=200)
+            db_movie = db_helper.get_movie_by_id(movie_id)
+
+            assert_equal(get_response.id, db_movie.id, "ID не совпадает")
+            assert_equal(get_response.name, db_movie.name, "Название не совпадает")
+            assert_equal(get_response.price, db_movie.price, "Цена не совпадает")
+
+        with allure.step("Удаление фильма"):
+            super_admin.api.movie_api.delete_movie(movie_id, expected_status=200)
+
+    @allure.story("Обновление фильмов")
+    @allure.severity(allure.severity_level.CRITICAL)
+    @allure.title("Обновление фильма через API с проверкой БД")
+    @pytest.mark.regression
+    @pytest.mark.db
+    def test_update_movie_db_check(self, super_admin: User, db_helper: DBHelper, movie_data: MovieModel):
+        with allure.step("Подготовка: создание фильма"):
+            api_movie = super_admin.api.movie_api.create_movie(movie_data, expected_status=201)
+            movie_id = api_movie.id
+            original_price = api_movie.price
+
+        with allure.step("Обновление цены фильма через API"):
+            update_data = MovieUpdate(price=original_price + 100)
+            super_admin.api.movie_api.update_movie(movie_id, update_data, expected_status=200)
+
+        with allure.step("Проверка обновления цены в БД"):
+            db_movie = db_helper.get_movie_by_id(movie_id)
+            assert_equal(db_movie.price, update_data.price, "Цена в БД не обновилась")
+
+        with allure.step("Удаление фильма"):
+            super_admin.api.movie_api.delete_movie(movie_id, expected_status=200)
+
+    def test_delete_movie_db(self, super_admin: User, db_helper: DBHelper, movie_data: MovieModel):
+        with allure.step("Подготовка данных: создание фильма"):
+            api_movie = super_admin.api.movie_api.create_movie(movie_data, expected_status=201)
+            movie_id = api_movie.id
+
+        with allure.step("Удаление фильма"):
+            super_admin.api.movie_api.delete_movie(movie_id, expected_status=200)
+
+        with allure.step("Проверка удаления фильма из БД"):
+            db_movie = db_helper.get_movie_by_id(movie_id)
+            assert_equal(db_movie is None, True, f"Фильм {movie_id} всё ещё существует")
