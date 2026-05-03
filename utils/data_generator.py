@@ -2,6 +2,11 @@ import datetime
 import random
 import string
 from faker import Faker
+
+from constants import Roles
+from models.movies_models import MovieModel
+from models.user_models import UserModel
+
 faker = Faker()
 
 class DataGenerator:
@@ -32,21 +37,21 @@ class DataGenerator:
 
         return ''.join(password)
     @staticmethod
-    def generate_user_data()->dict:
+    def generate_user_data()->UserModel:
         """Генерирует данные для тестового пользователя"""
         from uuid import uuid4
 
-        return {
-            'id': f'{uuid4()}',
-            'email': DataGenerator.generate_random_email(),
-            'full_name': DataGenerator.generate_random_name(),
-            'password': DataGenerator.generate_random_password(),
-            'created_at': datetime.datetime.now(),
-            'updated_at': datetime.datetime.now(),
-            'verified': False,
-            'banned': False,
-            'roles': '{USER}'
-        }
+        return UserModel(
+            id= f'{uuid4()}',
+            email=DataGenerator.generate_random_email(),
+            full_name=DataGenerator.generate_random_name(),
+            password=DataGenerator.generate_random_password(),
+            created_at=datetime.datetime.now(),
+            updated_at=datetime.datetime.now(),
+            verified=False,
+            banned=False,
+            roles=[Roles.USER]
+    )
 
     @staticmethod
     def generate_random_int(n):
@@ -58,13 +63,13 @@ def generate_movie(price_range=(500, 3000), locations = None, genre_range = (1,4
     if locations is None:
         locations = ["MSK", "SPB"]
 
-    return {
-        "name": faker.sentence(),
-        "imageUrl": "https://allwebs.ru/images/2026/03/14/5a789b9ac9178ace2c2e1c3b2564e64f.jpg",
-        "price": faker.random_int(*price_range),
-        "description": faker.text(),
-        "location": random.choice(locations),
-        "published": random.choice([True, False]),
-        "genreId": random.randint(*genre_range),
-        "rating": random.randint(1, 5),
-    }
+    return MovieModel(
+        name=faker.sentence(),
+        price=faker.random_int(*price_range),
+        location=random.choice(locations),
+        genreId=random.randint(*genre_range),
+        imageUrl="https://allwebs.ru/images/2026/03/14/5a789b9ac9178ace2c2e1c3b2564e64f.jpg",
+        description=faker.text(),
+        published=random.choice([True, False]),
+        rating=random.randint(1, 5),
+    )

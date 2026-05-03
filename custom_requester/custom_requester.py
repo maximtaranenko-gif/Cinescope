@@ -1,5 +1,7 @@
 
 import json
+from typing import Optional
+
 import requests
 import logging
 import os
@@ -14,14 +16,14 @@ class CustomRequester:
         "Accept": "application/json"
     }
 
-    def __init__(self, session, base_url):
+    def __init__(self, session:requests.Session, base_url:str):
         self.session = session
         self.base_url = base_url
         self.headers = self.base_headers.copy()
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
 
-    def send_request(self, method, endpoint, data=None, expected_status=200, need_logging=True, params=None):
+    def send_request(self, method: str, endpoint: str, data: Optional[dict]=None, expected_status: int = 200, need_logging: bool = True, params: Optional[dict] = None):
         """
         Универсальный метод для отправки запросов.
         :param method: HTTP метод (GET, POST, PUT, DELETE и т.д.).
@@ -29,6 +31,7 @@ class CustomRequester:
         :param data: Тело запроса (JSON-данные).
         :param expected_status: Ожидаемый статус-код (по умолчанию 200).
         :param need_logging: Флаг для логирования (по умолчанию True).
+        :param params:Запрос параметр для URL
         :return: Объект ответа requests.Response.
         """
         url = f"{self.base_url}{endpoint}"

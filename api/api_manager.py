@@ -1,10 +1,12 @@
+import requests
+
 from clients.AuthAPI import AuthAPI
 from clients.MovieAPI import MovieAPI
 from clients.UserAPI import UserAPI
 
 
 class ApiManager:
-    def __init__(self, session):
+    def __init__(self, session:requests.Session):
         self.session = session
         self.auth_api = AuthAPI(session)
         self.movie_api = MovieAPI(session)

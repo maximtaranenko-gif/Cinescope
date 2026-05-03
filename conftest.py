@@ -1,3 +1,5 @@
+from typing import Generator
+
 from faker import Faker
 import pytest
 import requests
@@ -6,7 +8,7 @@ from custom_requester.custom_requester import CustomRequester
 from api.api_manager import ApiManager
 from entities.user import User
 from models.movies_models import MovieResponse, MovieModel
-from models.user_models import UserModel, RegisterUserResponse
+from models.user_models import UserModel, UserResponse, LoginRequest, UserRoleUpdateModel
 from resources.user_creds import SuperAdminCreds
 from utils.data_generator import DataGenerator, generate_movie
 from sqlalchemy.orm import Session
@@ -75,14 +77,14 @@ def unauthorized_user(user_session, super_admin, creation_user_data):
     unauthorized_data.password = DataGenerator.generate_random_password()
 
     response = super_admin.api.user_api.create_user(unauthorized_data, expected_status=201)
-    user_id = response.json()["id"]
+    user_id = response.id
 
 
     unauthorized = User(
-        unauthorized_data.email,
-        unauthorized_data.password,
-        [Roles.USER],
-        new_session
+        email=unauthorized_data.email,
+        password=unauthorized_data.password,
+        roles=[Roles.USER],
+        api=new_session
     )
 
     yield unauthorized
@@ -94,15 +96,14 @@ def unauthorized_user(user_session, super_admin, creation_user_data):
 def common_user(user_session, super_admin, creation_user_data):
     new_session = user_session()
 
-    response = super_admin.api.user_api.create_user(creation_user_data)
-    assert response.status_code == 201
-    user_id = response.json()["id"]
+    response = super_admin.api.user_api.create_user(creation_user_data, expected_status=201)
+    user_id = response.id
 
     common_user = User(
-        creation_user_data.email,
-        creation_user_data.password,
-        [Roles.USER],
-        new_session)
+        email=creation_user_data.email,
+        password=creation_user_data.password,
+        roles=[Roles.USER],
+        api=new_session)
     common_user.id = user_id
 
     # Cleanup
@@ -120,18 +121,18 @@ def admin(user_session, super_admin, creation_user_data, api_manager):
     admin_data.email = DataGenerator.generate_random_email()
 
     admin = User(
-        admin_data.email,
-        admin_data.password,
-        [Roles.USER],
-        new_session)
+        email=admin_data.email,
+        password=admin_data.password,
+        roles=[Roles.USER],
+        api=new_session)
 
     # Создаём пользователя
     create_response = super_admin.api.user_api.create_user(admin_data, expected_status=201)
-    user_id = create_response.json()['id']
+    user_id = create_response.id
 
     # Обновляем роль
     fields_to_update = ["roles", "verified", "banned"]
-    update_data = {key:getattr( admin_data,key) for key in fields_to_update}
+    update_data = UserRoleUpdateModel(roles=[Roles.USER, Roles.ADMIN])
     super_admin.api.user_api.update_role_user_admin(user_id, update_data, expected_status=200)
     # Авторизуемся
     admin.api.auth_api.authenticate(admin.creds)
@@ -142,13 +143,18 @@ def admin(user_session, super_admin, creation_user_data, api_manager):
 @pytest.fixture(scope="function")
 def super_admin(api_manager):
     super_admin = User(
-        SuperAdminCreds.USERNAME,
-        SuperAdminCreds.PASSWORD,
-        [Roles.SUPER_ADMIN],
-        api_manager
+        email=SuperAdminCreds.USERNAME,
+        password=SuperAdminCreds.PASSWORD,
+        roles=[Roles.SUPER_ADMIN],
+        api=api_manager
     )
 
-    auth_response = super_admin.api.auth_api.authenticate(super_admin.creds)
+    login_creds = LoginRequest(
+        email=SuperAdminCreds.USERNAME,
+        password=SuperAdminCreds.PASSWORD
+    )
+
+    auth_response = super_admin.api.auth_api.authenticate(login_creds)
     user_id = auth_response["user"]["id"]
     super_admin.id = user_id
     return super_admin
@@ -203,17 +209,17 @@ def created_test_movie(db_helper, movie_data):
         db_helper.delete_movie(movie)
 
 @pytest.fixture(scope="function")
-def registered_user(auth_requester, test_user)->RegisterUserResponse:
+def registered_user(auth_requester, test_user)->UserResponse:
     """
     Фикстура для регистрации и получения данных зарегистрированного пользователя.
     """
     response = auth_requester.send_request(
         method="POST",
         endpoint=REGISTER_ENDPOINT,
-        data=test_user,
+        data=test_user.model_dump(),
         expected_status=201
     )
-    return RegisterUserResponse(**response.json())
+    return UserResponse(**response.json())
 
 @pytest.fixture(scope="session")
 def auth_requester()->CustomRequester:
@@ -224,7 +230,7 @@ def auth_requester()->CustomRequester:
     return CustomRequester(session=session, base_url=AUTH_URL)
 
 @pytest.fixture
-def movie_data()-> dict:
+def movie_data()-> MovieModel:
     """Фикстура для генерации фильма(Валидные данные)"""
     return generate_movie()
 
@@ -244,11 +250,9 @@ def movie_data_incorrect()->dict:
         genre_range= (10, 100)
     )
 @pytest.fixture
-def created_movie(api_manager:ApiManager,super_admin, movie_data:dict)->MovieModel:
+def created_movie(api_manager:ApiManager,super_admin, movie_data:MovieModel)->Generator[MovieResponse, None, None]:
     """Фикстура для создания фильма"""
-    response = super_admin.api.movie_api.create_movie(movie_data, expected_status=201)
-    movie_dict = response.json()
-    movie = MovieResponse(**movie_dict)
+    movie = super_admin.api.movie_api.create_movie(movie_data, expected_status=201)
 
     yield movie
 
