@@ -18,7 +18,6 @@ class TestMovieAPI:
     @pytest.mark.smoke
     @pytest.mark.positive
     @pytest.mark.pagination
-    @pytest.mark.movies
     def test_get_movies_poster(self, super_admin: User):
         with allure.step("Получение фильма с фильтром (пагинация)"):
             movies_list = super_admin.api.movie_api.get_movies_poster(expected_status=200)
@@ -32,8 +31,6 @@ class TestMovieAPI:
     @allure.title("Позитивный тест на получение конкретного фильма")
     @pytest.mark.smoke
     @pytest.mark.positive
-    @pytest.mark.get_movie
-    @pytest.mark.movies
     def test_get_movie(self, super_admin: User, created_movie: MovieResponse):
         movie_id = created_movie.id
 
@@ -49,8 +46,6 @@ class TestMovieAPI:
     @allure.severity(allure.severity_level.MINOR)
     @allure.title("Негативный тест на поиск несуществующего фильма")
     @pytest.mark.negative
-    @pytest.mark.get_movie
-    @pytest.mark.movies
     def test_incorrect_get_movie(self, super_admin: User):
         with allure.step("Получение несуществующего фильма"):
             super_admin.api.movie_api.get_movie_raw(1, expected_status=404)
@@ -61,7 +56,6 @@ class TestMovieAPI:
     @pytest.mark.smoke
     @pytest.mark.positive
     @pytest.mark.get_review_movie
-    @pytest.mark.movies
     def test_get_movie_review(self, super_admin: User, created_movie: MovieResponse):
         movie_id = created_movie.id
         with allure.step("Получение отзыва о фильме"):
@@ -72,7 +66,6 @@ class TestMovieAPI:
     @allure.title("Негативный тест: получение отзыва о фильме, которого не существует")
     @pytest.mark.negative
     @pytest.mark.get_review_movie
-    @pytest.mark.movies
     def test_get_incorrect_movie_review(self, super_admin: User, created_movie: MovieResponse):
         fake_movie_id = 9999999
         with allure.step("Получение отзыва по несуществующему ID"):
@@ -84,7 +77,6 @@ class TestMovieAPI:
     @pytest.mark.smoke
     @pytest.mark.positive
     @pytest.mark.get_list_genres
-    @pytest.mark.movies
     def test_get_movie_genres(self, super_admin: User):
         with allure.step("Получение списка жанров"):
             super_admin.api.movie_api.get_genre_movie(expected_status=200)
@@ -95,7 +87,6 @@ class TestMovieAPI:
     @pytest.mark.smoke
     @pytest.mark.positive
     @pytest.mark.get_genre
-    @pytest.mark.movies
     def test_get_genre_by_id(self, super_admin: User):
         with allure.step("Получение жанра по ID"):
             super_admin.api.movie_api.getting_genre_by_id(1, expected_status=200)
@@ -107,7 +98,6 @@ class TestMovieAPI:
     @pytest.mark.positive
     @pytest.mark.auth
     @pytest.mark.get_movie
-    @pytest.mark.movies
     def test_get_movie_by_default_user(self, super_admin: User, created_movie: MovieResponse, common_user: User):
         movie_id = created_movie.id
         with allure.step("Получение фильма через обычного пользователя"):
@@ -124,7 +114,7 @@ class TestMovieAPI:
 @allure.story("Фильтрация")
 @pytest.mark.parametrized
 @pytest.mark.filter_tests
-@pytest.mark.movies
+@pytest.mark.get_movies
 @pytest.mark.xfail(reason="После рефакторинга не работает негатив кейс связанный с genreId(Pydantic модель делает это в методе)")
 def test_get_movie_pagination(price: int, locations: str, genreId, expected_status: int, super_admin: User):
     with allure.step(f"Запрос с параметрами: price={price}, location={locations}, genreId={genreId}"):

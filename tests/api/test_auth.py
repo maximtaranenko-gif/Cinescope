@@ -19,6 +19,7 @@ from soft_assert import assert_equal
 
 @allure.epic("Cinescope")
 @allure.feature("Авторизация пользователей")
+@pytest.mark.auth
 class TestAuthAPI:
     @allure.title("Создание пользователя")
     def test_register_user(self, api_manager:ApiManager, test_user:UserModel):

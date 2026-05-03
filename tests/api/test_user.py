@@ -6,6 +6,7 @@ from soft_assert import assert_equal
 
 @allure.epic("Пользователи")
 @allure.feature("Управление пользователями")
+@pytest.mark.users
 class TestUser:
 
     @allure.title("Создание пользователя через суперадмина")

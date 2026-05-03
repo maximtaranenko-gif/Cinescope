@@ -23,7 +23,6 @@ class TestMovieDB:
     @allure.title("Создание фильма через API с проверкой в БД")
     @pytest.mark.smoke
     @pytest.mark.regression
-    @pytest.mark.db
     def test_create_movie_db_check(self, super_admin: User, db_helper: DBHelper, movie_data: MovieModel):
         with allure.step("Создание фильма через API"):
             api_movie = super_admin.api.movie_api.create_movie(movie_data, expected_status=201)
@@ -44,7 +43,6 @@ class TestMovieDB:
     @allure.title("Получение фильма через API с проверкой соответствия БД")
     @pytest.mark.smoke
     @pytest.mark.regression
-    @pytest.mark.db
     def test_get_movie_db_check(self, super_admin: User, db_helper: DBHelper, movie_data: MovieModel):
         with allure.step("Подготовка: создание фильма"):
             api_movie = super_admin.api.movie_api.create_movie(movie_data, expected_status=201)
@@ -65,7 +63,6 @@ class TestMovieDB:
     @allure.severity(allure.severity_level.CRITICAL)
     @allure.title("Обновление фильма через API с проверкой БД")
     @pytest.mark.regression
-    @pytest.mark.db
     def test_update_movie_db_check(self, super_admin: User, db_helper: DBHelper, movie_data: MovieModel):
         with allure.step("Подготовка: создание фильма"):
             api_movie = super_admin.api.movie_api.create_movie(movie_data, expected_status=201)

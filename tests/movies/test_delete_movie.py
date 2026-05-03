@@ -10,15 +10,14 @@ from entities.user import User
 
 @allure.epic("Cinescope")
 @allure.feature("API фильмы")
+@pytest.mark.delete_movie
+@pytest.mark.movies
 class TestMovieAPI:
     @allure.story("Удаление фильмов")
     @allure.severity(allure.severity_level.CRITICAL)
     @allure.title("Позитивный тест на удаление конкретного фильма с проверкой в БД")
     @pytest.mark.smoke
     @pytest.mark.regression
-    @pytest.mark.db
-    @pytest.mark.delete_movie
-    @pytest.mark.movies
     def test_delete_movie(self, movie_data: MovieModel, super_admin: User, db_helper: DBHelper):
         with allure.step("Создание и валидация фильма"):
             movie = super_admin.api.movie_api.create_movie(movie_data, expected_status=201)
@@ -36,8 +35,6 @@ class TestMovieAPI:
     @allure.title("Негативный тест на удаление несуществующего фильма")
     @pytest.mark.regression
     @pytest.mark.negative
-    @pytest.mark.delete_movie
-    @pytest.mark.movies
     def test_incorrect_delete_movie(self, super_admin):
         with allure.step("Удаление несуществующего фильма"):
             super_admin.api.movie_api.delete_movie_raw(1, expected_status=404)
@@ -47,8 +44,6 @@ class TestMovieAPI:
     @allure.title("Позитивный тест: тест на удаление отзыва об фильме")
     @pytest.mark.smoke
     @pytest.mark.regression
-    @pytest.mark.delete_movie
-    @pytest.mark.movies
     def test_delete_movie_review(self, movie_data: MovieModel, super_admin: User):
         user_id = super_admin.id
 
@@ -72,7 +67,6 @@ class TestMovieAPI:
     @pytest.mark.negative
     @pytest.mark.auth
     @pytest.mark.delete_review
-    @pytest.mark.movies
     def test_delete_movie_review_not_authorized(self, api_manager: ApiManager, movie_data: MovieModel,super_admin: User):
         with allure.step("Создаем фильм"):
             response = super_admin.api.movie_api.create_movie(movie_data, expected_status=201)
@@ -95,7 +89,6 @@ class TestMovieAPI:
     @pytest.mark.smoke
     @pytest.mark.regression
     @pytest.mark.delete_genre
-    @pytest.mark.movies
     def test_delete_genre(self, super_admin: User):
         genre_data = MovieCreateGenre(name="Абоба")
 
@@ -111,7 +104,6 @@ class TestMovieAPI:
     @allure.title("Тест проверки прав доступа на удаление фильма, только супер админ может удалять фильмы")
     @pytest.mark.slow
     @pytest.mark.regression
-    @pytest.mark.movies
     @pytest.mark.parametrize("role, expected_status", [
         pytest.param("super_admin", 200, marks=[pytest.mark.smoke, pytest.mark.slow]),
         pytest.param("admin", 403, marks=[pytest.mark.slow]),

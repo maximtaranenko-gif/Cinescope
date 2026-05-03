@@ -1,6 +1,6 @@
 from typing import Optional
-import datetime
 from typing import List
+import datetime
 from pydantic import BaseModel, Field, field_validator
 from constants import Roles
 
@@ -19,7 +19,6 @@ class UserModel(BaseModel):
         if "password" in info.data and value != info.data["password"]:
             raise ValueError("Пароли не совпадают")
         return value
-
 
 class LoginRequest(BaseModel):
     """Модель для авторизации пользователя"""

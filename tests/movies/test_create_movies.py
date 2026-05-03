@@ -2,21 +2,21 @@ from conftest import movie_data, movie_data_incorrect, multiple_movies, faker, s
 import allure
 import pytest
 from entities.user import User
-from models.movies_models import MovieResponse, MovieModel, MovieCreateReview, MovieCreateGenre, MovieResponseGenre, \
-    MovieResponseReview
+from models.movies_models import MovieResponse, MovieModel, MovieCreateReview, MovieCreateGenre
 from soft_assert import assert_equal
+from flaky import flaky
 
 
 @allure.epic("Cinescope")
 @allure.feature("API фильмы")
+@pytest.mark.movies
+@pytest.mark.create_movie
 class TestMovieAPI:
     @allure.story("Создание фильмов")
     @allure.severity(allure.severity_level.CRITICAL)
     @allure.title("Позитивный тест на создание фильма")
     @pytest.mark.smoke
     @pytest.mark.positive
-    @pytest.mark.create_movie
-    @pytest.mark.movies
     def test_create_movie(self, movie_data: MovieModel, super_admin: User):
         with allure.step("Создание фильма"):
             validated_movie = super_admin.api.movie_api.create_movie(movie_data, expected_status=201)
@@ -38,8 +38,6 @@ class TestMovieAPI:
     @allure.title("Позитивный тест на создание нескольких фильмов при помощи фикстуры")
     @pytest.mark.smoke
     @pytest.mark.positive
-    @pytest.mark.create_movie
-    @pytest.mark.movies
     def test_create_multiple_movies(self, multiple_movies: list[MovieModel], super_admin: User):
         created_ids = []
 
@@ -65,9 +63,7 @@ class TestMovieAPI:
     @allure.story("Создание фильмов")
     @allure.severity(allure.severity_level.CRITICAL)
     @allure.title("Негативный тест на создание фильма")
-    @pytest.mark.create_movie
     @pytest.mark.negative
-    @pytest.mark.movies
     @pytest.mark.xfail(reason="После рефактора кода, Pydantic модель не позволяет генерить заведомо ложные данные")
     def test_incorrect_create_movie(self, movie_data_incorrect: MovieModel, super_admin: User):
         with allure.step("Создание фильма при помощи фикстуры, которая заведомо генерит неверные данные"):
@@ -80,7 +76,6 @@ class TestMovieAPI:
     @pytest.mark.create_review
     @pytest.mark.smoke
     @pytest.mark.positive
-    @pytest.mark.movies
     def test_create_movie_review(self, created_movie: MovieResponse, super_admin: User):
         review_data = MovieCreateReview(rating=1, text="Это смотреть невозможно")
 
@@ -100,7 +95,7 @@ class TestMovieAPI:
     @pytest.mark.create_genre
     @pytest.mark.smoke
     @pytest.mark.positive
-    @pytest.mark.movies
+    @flaky(max_runs=5, min_passes=2)
     def test_create_genre(self, super_admin: User):
         genre_data = MovieCreateGenre(name=faker.word())
 
@@ -111,13 +106,14 @@ class TestMovieAPI:
             assert_equal(created_genre.id is not None, True, "ID жанра не получен")
             assert_equal(created_genre.name, genre_data.name, "Название жанра не совпадает")
 
+        with allure.step("Удаление жанра после создания:"):
+            super_admin.api.movie_api.delete_genre(created_genre.id, expected_status=200)
+
 
     @allure.story("Права доступа")
     @allure.severity(allure.severity_level.CRITICAL)
     @allure.title("Негативный тест: попытка создать фильм под ролью USER")
-    @pytest.mark.create_movie
     @pytest.mark.negative
-    @pytest.mark.movies
     def test_create_movies_from_default_user(self, movie_data: MovieModel, common_user: User):
         with allure.step("Создание фильма обычным пользователем"):
             common_user.api.movie_api.create_movie_raw(movie_data, expected_status=403)

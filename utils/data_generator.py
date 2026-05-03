@@ -3,7 +3,9 @@ import random
 import string
 from faker import Faker
 
+from constants import Roles
 from models.movies_models import MovieModel
+from models.user_models import UserModel
 
 faker = Faker()
 
@@ -35,21 +37,21 @@ class DataGenerator:
 
         return ''.join(password)
     @staticmethod
-    def generate_user_data()->dict:
+    def generate_user_data()->UserModel:
         """Генерирует данные для тестового пользователя"""
         from uuid import uuid4
 
-        return {
-            'id': f'{uuid4()}',
-            'email': DataGenerator.generate_random_email(),
-            'full_name': DataGenerator.generate_random_name(),
-            'password': DataGenerator.generate_random_password(),
-            'created_at': datetime.datetime.now(),
-            'updated_at': datetime.datetime.now(),
-            'verified': False,
-            'banned': False,
-            'roles': '{USER}'
-        }
+        return UserModel(
+            id= f'{uuid4()}',
+            email=DataGenerator.generate_random_email(),
+            full_name=DataGenerator.generate_random_name(),
+            password=DataGenerator.generate_random_password(),
+            created_at=datetime.datetime.now(),
+            updated_at=datetime.datetime.now(),
+            verified=False,
+            banned=False,
+            roles=[Roles.USER]
+    )
 
     @staticmethod
     def generate_random_int(n):

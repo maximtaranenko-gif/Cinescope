@@ -1,22 +1,21 @@
 from conftest import created_movie, super_admin
 import pytest
 import allure
-from models.movies_models import MovieResponse, MovieModel, MovieUpdate, MovieCreateReview, MovieUpdateReview, \
-    MovieResponseReview
+from models.movies_models import MovieResponse, MovieModel, MovieUpdate, MovieCreateReview, MovieUpdateReview
 from entities.user import User
 from soft_assert import assert_equal
 
 
 @allure.epic("Cinescope")
 @allure.feature("API фильмы")
+@pytest.mark.movies
+@pytest.mark.change_movies
 class TestMovieAPI:
     @allure.story("Изменение фильмов")
     @allure.severity(allure.severity_level.CRITICAL)
     @allure.title("Позитивный тест на изменение фильма")
     @pytest.mark.smoke
     @pytest.mark.positive
-    @pytest.mark.change_movies
-    @pytest.mark.movies
     def test_change_movie(self, created_movie: MovieResponse, super_admin: User):
         movie_id = created_movie.id
         new_name = MovieUpdate(name="Тест")
@@ -38,8 +37,6 @@ class TestMovieAPI:
     @allure.title("Позитивный тест: изменение отзыва о фильме")
     @pytest.mark.smoke
     @pytest.mark.positive
-    @pytest.mark.change_reviews
-    @pytest.mark.movies
     def test_change_movie_review(self, movie_data: MovieModel, super_admin: User):
         with allure.step("Создаем через суперадмина фильм"):
             response = super_admin.api.movie_api.create_movie(movie_data, expected_status=201)
@@ -65,8 +62,6 @@ class TestMovieAPI:
     @allure.severity(allure.severity_level.CRITICAL)
     @allure.title("Негативный тест: изменение отзыва с несуществующим movie_id")
     @pytest.mark.negative
-    @pytest.mark.change_reviews
-    @pytest.mark.movies
     def test_change_movie_review_incorrect_id(self, movie_data: MovieModel, super_admin: User):
         fake_movie_id = 999999999
 
@@ -91,7 +86,6 @@ class TestMovieAPI:
     @pytest.mark.xfail(reason="Баг в API. Фича показа отзыва работала до изменения API")
     @pytest.mark.positive
     @pytest.mark.review_visibility
-    @pytest.mark.movies
     def test_show_movie_review(self, movie_data: MovieModel, super_admin: User):
         user_id = super_admin.id
 
@@ -121,7 +115,6 @@ class TestMovieAPI:
     @allure.title("Негативный тест: попытка показать отзыв с несуществующим movie_id")
     @pytest.mark.negative
     @pytest.mark.review_visibility
-    @pytest.mark.movies
     def test_show_movie_review_invalid_movie_id(self, super_admin: User):
         fake_movie_id = 999999999
         user_id = "a76b8bf9-af13-45bb-b200-b9db86db26d3"
@@ -135,7 +128,6 @@ class TestMovieAPI:
     @pytest.mark.xfail(reason="Баг в API. Фича о скрытия отзыва о фильме работала до изменения Апи")
     @pytest.mark.positive
     @pytest.mark.review_visibility
-    @pytest.mark.movies
     def test_hide_movie_review(self, movie_data: MovieModel, super_admin: User):
         user_id = super_admin.id
 
@@ -156,7 +148,6 @@ class TestMovieAPI:
     @allure.title("Негативный тест: попытка скрыть отзыв с несуществующим movie_id")
     @pytest.mark.negative
     @pytest.mark.review_visibility
-    @pytest.mark.movies
     def test_hide_movie_review_invalid_movie_id(self, super_admin: User):
         fake_movie_id = 999999999
         user_id = "a76b8bf9-af13-45bb-b200-b9db86db26d3"
