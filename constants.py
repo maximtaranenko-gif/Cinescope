@@ -8,6 +8,9 @@ GREEN = '\033[32m'
 RED = '\033[31m'
 RESET = '\033[0m'
 
+
+DEFAULT_UI_TIMEOUT = 30000
+
 AUTH_URL = "https://auth.dev-cinescope.coconutqa.ru"
 MOVIE_URL = "https://api.dev-cinescope.coconutqa.ru"
 ADMIN_CREDS = (SuperAdminCreds.USERNAME, SuperAdminCreds.PASSWORD)
