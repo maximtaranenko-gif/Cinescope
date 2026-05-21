@@ -3,6 +3,8 @@ from typing import Generator
 from faker import Faker
 import pytest
 import requests
+from datetime import datetime
+from pathlib import Path
 from constants import REGISTER_ENDPOINT, AUTH_URL, Roles
 from custom_requester.custom_requester import CustomRequester
 from api.api_manager import ApiManager
@@ -14,8 +16,63 @@ from utils.data_generator import DataGenerator, generate_movie
 from sqlalchemy.orm import Session
 from db_requester.db_client import get_db_session
 from db_requester.db_helpers import DBHelper
+from constants import DEFAULT_UI_TIMEOUT
 faker = Faker()
 
+
+class Tools:
+    @staticmethod
+    def project_dir():
+        """
+        Возвращает корневую директорию проекта.
+        """
+        return Path(__file__).parent
+
+    @staticmethod
+    def files_dir(nested_directory: str = None, filename: str = None):
+        """
+        Возвращает путь к директории `files` (или её поддиректории).
+        Если директория не существует, она создается.
+        Если указан `filename`, возвращает полный путь к файлу.
+        """
+        files_path = Tools.project_dir() / "files"
+        if nested_directory:
+            files_path = files_path / nested_directory
+        files_path.mkdir(parents=True, exist_ok=True)
+
+        if filename:
+            return files_path / filename
+        return files_path
+
+    @staticmethod
+    def get_timestamp():
+        """
+        Возвращает текущую временную метку в формате YYYY-MM-DD_HH-MM-SS.
+        """
+        return datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+@pytest.fixture(scope="session")
+def browser(playwright):
+    browser = playwright.chromium.launch(headless=False)
+    yield browser
+    browser.close()
+
+@pytest.fixture(scope="function")
+def context(browser):
+    context = browser.new_context()
+    context.tracing.start(screenshots=True, snapshots= True, sources=True)
+    context.set_default_timeout(DEFAULT_UI_TIMEOUT)
+    yield context
+    log_name = f"trace_{Tools.get_timestamp()}.zip"
+    trace_path = Tools.files_dir('playwright_trace', log_name)
+    context.tracing.stop(path=trace_path)
+    context.close()
+
+@pytest.fixture(scope="function")
+def page(context):
+    page = context.new_page()
+    yield page
+    page.close()
 
 @pytest.fixture(scope="session")
 def session():
