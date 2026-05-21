@@ -63,9 +63,9 @@ class BasePage(PageAction):
         self.home_url = "https://dev-cinescope.coconutqa.ru/"
 
         # Общие локаторы для всех страниц на сайте
-        self.home_button = page.get_by_role("link", name="Cinescope")
+        self.home_button = page.get_by_text("Все фильмы")
         self.all_movies_button = page.get_by_role("link", name="Все фильмы")
-        self.login_button = page.get_by_role("button", name="Войти")
+        self.login_button = page.locator('button[type="button"]:has-text("Войти")')
         self.register_button = page.get_by_role("button", name="Зарегистрироваться")
 
     @allure.step("Переход на главную страницу из шапки")
