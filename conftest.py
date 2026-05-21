@@ -12,6 +12,7 @@ from entities.user import User
 from models.movies_models import MovieResponse, MovieModel
 from models.user_models import UserModel, UserResponse, LoginRequest, UserRoleUpdateModel
 from resources.user_creds import SuperAdminCreds
+from pages.login_page import CinescopeLoginPage
 from utils.data_generator import DataGenerator, generate_movie
 from sqlalchemy.orm import Session
 from db_requester.db_client import get_db_session
@@ -69,7 +70,7 @@ def context(browser):
     context.close()
 
 @pytest.fixture(scope="function")
-def page(context):
+def page_from_fixtures(context):
     page = context.new_page()
     yield page
     page.close()
@@ -264,6 +265,18 @@ def created_test_movie(db_helper, movie_data):
     yield movie
     if db_helper.movie_exists_by_id(movie.id):
         db_helper.delete_movie(movie)
+
+@pytest.fixture
+def authorized_page(page_from_fixtures, test_user:UserModel, registered_user: UserResponse):
+    """
+    Возвращает страницу с уже авторизованным пользователем(playwright)
+    """
+    login_page = CinescopeLoginPage(page_from_fixtures)
+    login_page.open()
+    login_page.login(test_user.email, test_user.password)
+    login_page.assert_was_redirect_to_home_page()
+
+    return page_from_fixtures
 
 @pytest.fixture(scope="function")
 def registered_user(auth_requester, test_user)->UserResponse:

@@ -16,4 +16,8 @@ test_services/service_what_is_today.py
 PydanticExample
 allure-results/
 allure-report/
+allure-reports/
+ui/test_playwright_example.py
+ui/screenshot.png
 Mock/
+files/
